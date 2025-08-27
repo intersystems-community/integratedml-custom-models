@@ -1,4 +1,4 @@
-name: CI - IntegratedML Pluggable Models Framework
+name: CI - IntegratedML Flexible Model Integration Framework
 
 on:
   push:

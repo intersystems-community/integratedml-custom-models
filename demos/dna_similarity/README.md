@@ -1,8 +1,8 @@
 # DNA Similarity and Classification Demo
 
-## IntegratedML Pluggable Models Framework Solution
+## IntegratedML Flexible Model Integration Framework Solution
 
-This demo recreates the functionality of the [original DNA similarity project](https://openexchange.intersystems.com/package/DNA-similarity-and-classify) while demonstrating how the **IntegratedML Pluggable Models Framework** solves the three main architectural challenges identified in the original implementation.
+This demo recreates the functionality of the [original DNA similarity project](https://openexchange.intersystems.com/package/DNA-similarity-and-classify) while demonstrating how the **IntegratedML Flexible Model Integration Framework** solves the three main architectural challenges identified in the original implementation.
 
 ## 🎯 Original Project Challenges Addressed
 
@@ -72,7 +72,7 @@ pip install pandas scikit-learn sentence-transformers pyyaml numpy joblib
 
 # Clone the repository
 git clone <repository-url>
-cd pluggable_iml/demos/dna_similarity
+cd flexible_model_integration/demos/dna_similarity
 ```
 
 ### Running the Demo

@@ -1,4 +1,4 @@
-# IntegratedML Pluggable Models Docker Compose Configuration
+# IntegratedML Flexible Model Integration Docker Compose Configuration
 # Based on RAG templates pattern for IRIS Community Edition
 
 version: '3.8'
@@ -6,7 +6,7 @@ version: '3.8'
 services:
   iris:
     image: ${IRIS_IMAGE:-intersystemsdc/iris-community:latest}
-    container_name: pluggable_iml_iris
+    container_name: flexible_model_integration_iris
     ports:
       - "${IRIS_PORT:-1972}:1972"
       - "${IRIS_WEB_PORT:-52773}:52773"
@@ -45,7 +45,7 @@ services:
       dockerfile: docker/Dockerfile
       args:
         - PYTHON_VERSION=${PYTHON_VERSION:-3.11}
-    container_name: pluggable_iml_app
+    container_name: flexible_model_integration_app
     ports:
       - "${IML_APP_PORT:-8080}:8080"
     working_dir: /app
@@ -91,7 +91,7 @@ services:
       context: .
       dockerfile: docker/Dockerfile
       target: jupyter
-    container_name: pluggable_iml_jupyter
+    container_name: flexible_model_integration_jupyter
     ports:
       - "${JUPYTER_PORT:-8888}:8888"
     working_dir: /app

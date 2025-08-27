@@ -1,6 +1,6 @@
 ---
 name: Feature Request
-about: Suggest an idea for IntegratedML pluggable models framework
+about: Suggest an idea for IntegratedML flexible model integration framework
 title: '[FEATURE] '
 labels: 'enhancement'
 assignees: ''

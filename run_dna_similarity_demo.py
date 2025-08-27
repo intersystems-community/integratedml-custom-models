@@ -154,7 +154,7 @@ def main():
         # Step 5: Run Algorithm Selection Demonstration
         print_step(5, "Algorithm Selection Demonstration")
         
-        print("🤖 Demonstrating pluggable algorithm selection...")
+        print("🤖 Demonstrating flexible algorithm selection...")
         print("This addresses Challenge #2: Hardcoded Algorithm Selection")
         print()
         
@@ -232,7 +232,7 @@ def main():
         print_banner("DNA SIMILARITY DEMO COMPLETED! 🎉")
         print("Key accomplishments:")
         print("✅ Demonstrated configurable vectorization strategies")
-        print("✅ Showed pluggable algorithm selection")
+        print("✅ Showed flexible algorithm selection")
         print("✅ Illustrated clean database abstraction")
         print("✅ Performed DNA sequence classification")
         print("✅ Executed vector-based similarity search")

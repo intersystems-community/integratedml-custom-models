@@ -2,7 +2,7 @@
 
 ## Our Pledge
 
-We as members, contributors, and leaders pledge to make participation in the **IntegratedML Pluggable Models Framework** community a harassment-free experience for everyone, regardless of age, body size, visible or invisible disability, ethnicity, sex characteristics, gender identity and expression, level of experience, education, socio-economic status, nationality, personal appearance, race, caste, color, religion, or sexual identity and orientation.
+We as members, contributors, and leaders pledge to make participation in the **IntegratedML Flexible Model Integration Framework** community a harassment-free experience for everyone, regardless of age, body size, visible or invisible disability, ethnicity, sex characteristics, gender identity and expression, level of experience, education, socio-economic status, nationality, personal appearance, race, caste, color, religion, or sexual identity and orientation.
 
 We pledge to act and interact in ways that contribute to an open, welcoming, diverse, inclusive, and healthy community focused on advancing database-integrated machine learning with **InterSystems IRIS** and **IntegratedML**.
 
@@ -165,7 +165,7 @@ We recognize that a strong code of conduct enhances:
 * **Learning**: Inclusive environments accelerate knowledge sharing
 * **Impact**: Respectful collaboration maximizes community benefit
 
-Thank you for helping make the IntegratedML Pluggable Models Framework a welcoming, professional, and innovative community! 🚀
+Thank you for helping make the IntegratedML Flexible Model Integration Framework a welcoming, professional, and innovative community! 🚀
 
 ---
 

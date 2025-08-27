@@ -1,14 +1,14 @@
-# Contributing to IntegratedML Pluggable Models Demo
+# Contributing to IntegratedML Flexible Model Integration Demo
 
-Thank you for your interest in contributing to the IntegratedML Pluggable Models Demo project! This is a community-driven project hosted in the **intersystems-community** organization, and we welcome contributors of all skill levels.
+Thank you for your interest in contributing to the IntegratedML Flexible Model Integration Demo project! This is a community-driven project hosted in the **intersystems-community** organization, and we welcome contributors of all skill levels.
 
-[![Contributors](https://img.shields.io/github/contributors/intersystems-community/pluggable_iml.svg)](https://github.com/intersystems-community/pluggable_iml/graphs/contributors)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/intersystems-community/pluggable_iml/pulls)
-[![Good First Issues](https://img.shields.io/github/issues/intersystems-community/pluggable_iml/good%20first%20issue.svg)](https://github.com/intersystems-community/pluggable_iml/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22)
+[![Contributors](https://img.shields.io/github/contributors/intersystems-community/integratedml-flexible-model-integration.svg)](https://github.com/intersystems-community/integratedml-flexible-model-integration/graphs/contributors)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/intersystems-community/integratedml-flexible-model-integration/pulls)
+[![Good First Issues](https://img.shields.io/github/issues/intersystems-community/integratedml-flexible-model-integration/good%20first%20issue.svg)](https://github.com/intersystems-community/integratedml-flexible-model-integration/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22)
 
 ## 🎯 Project Overview
 
-This project demonstrates IntegratedML's pluggable models capability through four progressive demos:
+This project demonstrates IntegratedML's flexible model integration capability through four progressive demos:
 1. **Credit Risk Assessment** (Beginner) - Custom feature engineering
 2. **Fraud Detection Ensemble** (Intermediate) - Real-time multi-model orchestration
 3. **Sales Forecasting** (Advanced) - Third-party library integration
@@ -26,8 +26,8 @@ This project demonstrates IntegratedML's pluggable models capability through fou
 
 1. **Fork and Clone the Repository**
    ```bash
-   git clone https://github.com/your-username/pluggable_iml.git
-   cd pluggable_iml
+   git clone https://github.com/your-username/integratedml-flexible-model-integration.git
+   cd integratedml-flexible-model-integration
    ```
 
 2. **Create a Virtual Environment**
@@ -73,7 +73,7 @@ mypy shared/ demos/
 ### Project Structure
 
 ```
-pluggable_iml/
+integratedml-flexible-model-integration/
 ├── demos/                  # Individual demo implementations
 │   ├── credit_risk/        # Demo 1: Credit Risk Assessment
 │   ├── fraud_detection/    # Demo 2: Fraud Detection Ensemble
@@ -118,7 +118,7 @@ pluggable_iml/
 
 We've created detailed issue templates to help you report issues effectively:
 
-**[🐛 Report a Bug](https://github.com/intersystems-community/pluggable_iml/issues/new?template=bug_report.md)**
+**[🐛 Report a Bug](https://github.com/intersystems-community/integratedml-flexible-model-integration/issues/new?template=bug_report.md)**
 
 Our bug report template includes sections for:
 - **Environment details** (Python version, OS, package versions)
@@ -129,7 +129,7 @@ Our bug report template includes sections for:
 
 ### ✨ Feature Requests
 
-**[✨ Request a Feature](https://github.com/intersystems-community/pluggable_iml/issues/new?template=feature_request.md)**
+**[✨ Request a Feature](https://github.com/intersystems-community/integratedml-flexible-model-integration/issues/new?template=feature_request.md)**
 
 Our feature request template covers:
 - **Clear description** and motivation
@@ -140,7 +140,7 @@ Our feature request template covers:
 
 ### 📘 Documentation Improvements
 
-**[📘 Improve Documentation](https://github.com/intersystems-community/pluggable_iml/issues/new?template=documentation_improvement.md)**
+**[📘 Improve Documentation](https://github.com/intersystems-community/integratedml-flexible-model-integration/issues/new?template=documentation_improvement.md)**
 
 Help us improve our docs by suggesting:
 - **Content improvements** and clarifications
@@ -150,7 +150,7 @@ Help us improve our docs by suggesting:
 
 ### 🎯 Demo Requests
 
-**[🎯 Request a Demo](https://github.com/intersystems-community/pluggable_iml/issues/new?template=demo_request.md)**
+**[🎯 Request a Demo](https://github.com/intersystems-community/integratedml-flexible-model-integration/issues/new?template=demo_request.md)**
 
 Suggest new demo scenarios:
 - **Industry domain** and use case
@@ -367,7 +367,7 @@ If you need help:
 
 ## 🙏 Thank You
 
-Thank you for contributing to IntegratedML Pluggable Models Demo! Your contributions help make machine learning more accessible and demonstrate the power of database-integrated ML workflows.
+Thank you for contributing to IntegratedML Flexible Model Integration Demo! Your contributions help make machine learning more accessible and demonstrate the power of database-integrated ML workflows.
 
 ---
 

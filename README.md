@@ -2,8 +2,8 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![CI](https://github.com/intersystems-community/pluggable_iml/workflows/CI/badge.svg)](https://github.com/intersystems-community/pluggable_iml/actions/workflows/ci.yml)
-[![CodeQL](https://github.com/intersystems-community/pluggable_iml/workflows/CodeQL/badge.svg)](https://github.com/intersystems-community/pluggable_iml/actions/workflows/codeql.yml)
+[![CI](https://github.com/intersystems-community/integratedml-flexible-model-integration/workflows/CI/badge.svg)](https://github.com/intersystems-community/integratedml-flexible-model-integration/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/intersystems-community/integratedml-flexible-model-integration/workflows/CodeQL/badge.svg)](https://github.com/intersystems-community/integratedml-flexible-model-integration/actions/workflows/codeql.yml)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 A demonstration framework for integrating custom machine learning models with InterSystems IRIS IntegratedML. This project provides four practical examples showing how to deploy scikit-learn compatible models directly into database workflows, enabling in-database predictions without data movement.
@@ -278,10 +278,10 @@ This is a community-driven project. Contributions are welcome from the InterSyst
 ### Ways to Contribute
 
 #### Report Issues
-- [Bug Reports](https://github.com/intersystems-community/pluggable_iml/issues/new?template=bug_report.md)
-- [Feature Requests](https://github.com/intersystems-community/pluggable_iml/issues/new?template=feature_request.md)
-- [Documentation](https://github.com/intersystems-community/pluggable_iml/issues/new?template=documentation_improvement.md)
-- [Demo Requests](https://github.com/intersystems-community/pluggable_iml/issues/new?template=demo_request.md)
+- [Bug Reports](https://github.com/intersystems-community/integratedml-flexible-model-integration/issues/new?template=bug_report.md)
+- [Feature Requests](https://github.com/intersystems-community/integratedml-flexible-model-integration/issues/new?template=feature_request.md)
+- [Documentation](https://github.com/intersystems-community/integratedml-flexible-model-integration/issues/new?template=documentation_improvement.md)
+- [Demo Requests](https://github.com/intersystems-community/integratedml-flexible-model-integration/issues/new?template=demo_request.md)
 
 #### Code Contributions
 1. Fork the repository
@@ -291,32 +291,32 @@ This is a community-driven project. Contributions are welcome from the InterSyst
 5. Test your changes (`pytest` + demo validation)
 6. Commit using [Conventional Commits](https://conventionalcommits.org/) (`git commit -m 'feat: add amazing feature'`)
 7. Push to your branch (`git push origin feature/amazing-feature`)
-8. Submit a [Pull Request](https://github.com/intersystems-community/pluggable_iml/pulls)
+8. Submit a [Pull Request](https://github.com/intersystems-community/integratedml-flexible-model-integration/pulls)
 
 #### Community Engagement
-- **Discussions**: Join conversations in [GitHub Discussions](https://github.com/intersystems-community/pluggable_iml/discussions)
+- **Discussions**: Join conversations in [GitHub Discussions](https://github.com/intersystems-community/integratedml-flexible-model-integration/discussions)
 - **Community Forum**: Participate in [InterSystems Developer Community](https://community.intersystems.com/)
-- **Code Review**: Help review [open Pull Requests](https://github.com/intersystems-community/pluggable_iml/pulls)
+- **Code Review**: Help review [open Pull Requests](https://github.com/intersystems-community/integratedml-flexible-model-integration/pulls)
 
 ## Support & Community
 
 ### Links
 - **Documentation**: [integratedml-demos.readthedocs.io](https://integratedml-demos.readthedocs.io/)
-- **Discussions**: [GitHub Discussions](https://github.com/intersystems-community/pluggable_iml/discussions)
-- **Issues**: [GitHub Issues](https://github.com/intersystems-community/pluggable_iml/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/intersystems-community/integratedml-flexible-model-integration/discussions)
+- **Issues**: [GitHub Issues](https://github.com/intersystems-community/integratedml-flexible-model-integration/issues)
 - **Community Forum**: [InterSystems Developer Community](https://community.intersystems.com/)
 - **Email**: [support@intersystems.com](mailto:support@intersystems.com)
 
 ### Getting Help
 - New to IntegratedML? Start with our [User Guide](docs/user_guide.md)
-- Questions? Check [GitHub Discussions](https://github.com/intersystems-community/pluggable_iml/discussions) first
-- Found a bug? Please [report it](https://github.com/intersystems-community/pluggable_iml/issues/new?template=bug_report.md)
-- Need a feature? Submit a [feature request](https://github.com/intersystems-community/pluggable_iml/issues/new?template=feature_request.md)
+- Questions? Check [GitHub Discussions](https://github.com/intersystems-community/integratedml-flexible-model-integration/discussions) first
+- Found a bug? Please [report it](https://github.com/intersystems-community/integratedml-flexible-model-integration/issues/new?template=bug_report.md)
+- Need a feature? Submit a [feature request](https://github.com/intersystems-community/integratedml-flexible-model-integration/issues/new?template=feature_request.md)
 - Contributing issues? See our [Contributing Guide](CONTRIBUTING.md)
 
 ### Project Status
-[![CI Status](https://github.com/intersystems-community/pluggable_iml/workflows/CI/badge.svg)](https://github.com/intersystems-community/pluggable_iml/actions)
-[![Security](https://github.com/intersystems-community/pluggable_iml/workflows/CodeQL/badge.svg)](https://github.com/intersystems-community/pluggable_iml/security)
+[![CI Status](https://github.com/intersystems-community/integratedml-flexible-model-integration/workflows/CI/badge.svg)](https://github.com/intersystems-community/integratedml-flexible-model-integration/actions)
+[![Security](https://github.com/intersystems-community/integratedml-flexible-model-integration/workflows/CodeQL/badge.svg)](https://github.com/intersystems-community/integratedml-flexible-model-integration/security)
 
 ## License
 

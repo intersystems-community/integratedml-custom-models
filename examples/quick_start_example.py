@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-IntegratedML Pluggable Models Demo - Quick Start Example
+IntegratedML Flexible Model Integration Demo - Quick Start Example
 
 This example demonstrates how to use the IntegratedML demo models
 in a standalone Python environment before deploying to IntegratedML.
@@ -231,7 +231,7 @@ def demo_model_serialization():
 
 def main():
     """Run all demo examples."""
-    print("IntegratedML Pluggable Models Demo - Quick Start Examples")
+    print("IntegratedML Flexible Model Integration Demo - Quick Start Examples")
     print("========================================================")
     
     try:

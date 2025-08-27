@@ -1,4 +1,4 @@
-# Pull Request - IntegratedML Pluggable Models Framework
+# Pull Request - IntegratedML Flexible Model Integration Framework
 
 ## 📋 PR Summary
 **Brief description of the changes in this pull request**
@@ -174,6 +174,6 @@ Technical approach taken:
 3. _______________
 
 ---
-**Thank you for contributing to the IntegratedML Pluggable Models Framework! 🎉**
+**Thank you for contributing to the IntegratedML Flexible Model Integration Framework! 🎉**
 
 Your contribution helps advance database-integrated machine learning for the InterSystems community.

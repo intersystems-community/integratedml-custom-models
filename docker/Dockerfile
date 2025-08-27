@@ -1,4 +1,4 @@
-# Multi-stage Dockerfile for IntegratedML Pluggable Models
+# Multi-stage Dockerfile for IntegratedML Flexible Model Integration
 FROM python:3.11-slim as base
 
 # Set environment variables

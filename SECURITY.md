@@ -1,8 +1,8 @@
 # Security Policy
 
-## 🔒 IntegratedML Pluggable Models Framework Security
+## 🔒 IntegratedML Flexible Model Integration Framework Security
 
-We take the security of the **IntegratedML Pluggable Models Framework** seriously. This document outlines our security policies, vulnerability reporting process, and best practices for secure usage.
+We take the security of the **IntegratedML Flexible Model Integration Framework** seriously. This document outlines our security policies, vulnerability reporting process, and best practices for secure usage.
 
 ## 🎯 Scope and Coverage
 

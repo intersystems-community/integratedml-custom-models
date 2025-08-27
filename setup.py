@@ -33,7 +33,7 @@ def read_requirements():
 setup(
     name="integratedml-demos",
     version="1.0.0",
-    description="Comprehensive demo portfolio showcasing IntegratedML's pluggable models capability",
+    description="Comprehensive demo portfolio showcasing IntegratedML's flexible model integration capability",
     long_description=read_readme(),
     long_description_content_type="text/markdown",
     author="InterSystems Corporation",
@@ -94,7 +94,7 @@ setup(
         "sql", 
         "scikit-learn",
         "ensemble models",
-        "pluggable models",
+        "flexible model integration",
         "intersystems"
     ],
     zip_safe=False,

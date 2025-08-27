@@ -1,6 +1,6 @@
 ---
 name: Demo/Example Request
-about: Request a new demo or example for IntegratedML pluggable models
+about: Request a new demo or example for IntegratedML flexible model integration
 title: '[DEMO] '
 labels: 'demo', 'enhancement'
 assignees: ''

@@ -48,7 +48,7 @@ def main():
     """Run the complete Credit Risk demo."""
     print_banner("INTEGRATEDML CREDIT RISK ASSESSMENT DEMO")
     print("This demo showcases real-time credit risk assessment using")
-    print("InterSystems IRIS and IntegratedML with pluggable models.")
+    print("InterSystems IRIS and IntegratedML with flexible model integration.")
     
     try:
         # Step 1: Test Database Connection
@@ -293,7 +293,7 @@ def main():
         print("✅ Showed model management capabilities")
         print()
         print("This demo shows IntegratedML working with live database")
-        print("and pluggable models for real-world credit risk assessment!")
+        print("and flexible model integration for real-world credit risk assessment!")
         
         return True
         

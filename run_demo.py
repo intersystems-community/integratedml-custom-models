@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-IntegratedML Pluggable Models Demo Script
+IntegratedML Flexible Model Integration Demo Script
 
 This script demonstrates the complete integration with IRIS and IntegratedML:
 1. IRIS database connectivity (Docker-based)
@@ -28,7 +28,7 @@ project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
 def main():
-    print("🚀 IntegratedML Pluggable Models Demo")
+    print("🚀 IntegratedML Flexible Model Integration Demo")
     print("=" * 50)
     
     print("\n📋 Demo Overview:")
@@ -102,7 +102,7 @@ def main():
     print("")
     
     print("🎉 Demo completed successfully!")
-    print("The IntegratedML Pluggable Models project is ready for production use!")
+    print("The IntegratedML Flexible Model Integration project is ready for production use!")
 
 if __name__ == "__main__":
     main()

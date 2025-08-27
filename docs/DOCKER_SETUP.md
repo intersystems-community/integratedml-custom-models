@@ -1,4 +1,4 @@
-# Docker Setup Guide for IntegratedML Pluggable Models
+# Docker Setup Guide for IntegratedML Flexible Model Integration
 
 This guide provides step-by-step instructions for setting up the complete development environment using Docker with IRIS Community Edition and IntegratedML.
 
@@ -15,7 +15,7 @@ This guide provides step-by-step instructions for setting up the complete develo
 ```bash
 # Clone the repository
 git clone <repository-url>
-cd pluggable_iml
+cd flexible_model_integration
 
 # Initialize Docker environment
 chmod +x docker/docker-init.sh
@@ -229,10 +229,10 @@ docker-compose up --build
 
 ```bash
 # Test IRIS connectivity
-docker exec -it pluggable_iml_iris iris session iris
+docker exec -it flexible_model_integration_iris iris session iris
 
 # Check IRIS status
-docker exec -it pluggable_iml_iris iris status
+docker exec -it flexible_model_integration_iris iris status
 ```
 
 #### 3. Memory Issues
@@ -317,7 +317,7 @@ docker-compose exec iml_app python run_credit_risk_demo.py
 
 ```bash
 # View volumes
-docker volume ls | grep pluggable_iml
+docker volume ls | grep flexible_model_integration
 
 # Backup data
 docker-compose exec iris iris backup
@@ -377,5 +377,5 @@ After successful setup:
 1. Explore the interactive Jupyter notebooks
 2. Run all three demo scripts
 3. Modify model parameters and retrain
-4. Develop custom models using the pluggable framework
+4. Develop custom models using the flexible framework
 5. Integrate with your own data sources

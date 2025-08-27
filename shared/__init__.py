@@ -2,7 +2,7 @@
 IntegratedML Flexible Model Integration Framework - Shared Components
 
 This package provides common utilities, base classes, and testing infrastructure
-for IntegratedML pluggable model demonstrations.
+for IntegratedML flexible model integration demonstrations.
 """
 
 __version__ = "1.0.0"

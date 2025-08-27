@@ -1,1 +1,1 @@
-# IntegratedML Pluggable Models Framework - Demos Package
+# IntegratedML Flexible Model Integration Framework - Demos Package

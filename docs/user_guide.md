@@ -1,6 +1,6 @@
-# IntegratedML Pluggable Models - Complete User Guide
+# IntegratedML Flexible Model Integration - Complete User Guide
 
-Welcome to the comprehensive guide for getting started with IntegratedML Pluggable Models! This guide will take you from installation through running your first machine learning models integrated directly into database workflows.
+Welcome to the comprehensive guide for getting started with IntegratedML Flexible Model Integration! This guide will take you from installation through running your first machine learning models integrated directly into database workflows.
 
 ## 📋 Table of Contents
 
@@ -122,7 +122,7 @@ python examples/quick_start_example.py
 
 **Expected Output:**
 ```
-IntegratedML Pluggable Models Demo - Quick Start Examples
+IntegratedML Flexible Model Integration Demo - Quick Start Examples
 ========================================================
 
 DEMO 1: Credit Risk Assessment with Custom Feature Engineering
@@ -416,4 +416,4 @@ export DEMO_SAMPLE_SIZE=1000
 
 ---
 
-**🎉 You're all set!** Choose your starting demo based on your experience level and dive into the world of IntegratedML Pluggable Models. Happy coding! 🚀
+**🎉 You're all set!** Choose your starting demo based on your experience level and dive into the world of IntegratedML Flexible Model Integration. Happy coding! 🚀

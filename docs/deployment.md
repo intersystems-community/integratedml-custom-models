@@ -2,7 +2,7 @@
 
 ## 🚀 Production Deployment Strategies
 
-This comprehensive guide covers deploying IntegratedML Pluggable Models in production environments, from single-server installations to large-scale distributed deployments with high availability and performance optimization.
+This comprehensive guide covers deploying IntegratedML Flexible Model Integration in production environments, from single-server installations to large-scale distributed deployments with high availability and performance optimization.
 
 ---
 
@@ -1631,4 +1631,4 @@ server {
 }
 ```
 
-This comprehensive deployment documentation provides production-ready strategies for deploying IntegratedML Pluggable Models across various environments, from single servers to large-scale cloud deployments with complete performance optimization, security, and monitoring capabilities.
+This comprehensive deployment documentation provides production-ready strategies for deploying IntegratedML Flexible Model Integration across various environments, from single servers to large-scale cloud deployments with complete performance optimization, security, and monitoring capabilities.

@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# IntegratedML Pluggable Models Docker Initialization Script
+# IntegratedML Flexible Model Integration Docker Initialization Script
 # This script sets up the necessary directory structure and permissions
 
 set -e
 
-echo "Initializing IntegratedML Pluggable Models Docker environment..."
+echo "Initializing IntegratedML Flexible Model Integration Docker environment..."
 
 # Create necessary directories
 mkdir -p docker/volumes/iris_data

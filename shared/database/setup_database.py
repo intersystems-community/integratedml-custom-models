@@ -2,7 +2,7 @@
 Database Setup and Initialization Module
 
 Sets up IRIS database schemas, tables, and IntegratedML configuration
-for the pluggable models demos.
+for the flexible model integration demos.
 """
 
 import os

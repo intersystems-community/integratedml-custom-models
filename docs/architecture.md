@@ -2,7 +2,7 @@
 
 ## 🏗️ System Overview
 
-The IntegratedML Pluggable Models Demo showcases a sophisticated architecture that bridges enterprise database capabilities with modern machine learning workflows. This guide provides a comprehensive technical deep-dive into the system design, base classes, integration patterns, and architectural decisions.
+The IntegratedML Flexible Model Integration Demo showcases a sophisticated architecture that bridges enterprise database capabilities with modern machine learning workflows. This guide provides a comprehensive technical deep-dive into the system design, base classes, integration patterns, and architectural decisions.
 
 ### Architecture Goals
 
@@ -50,7 +50,7 @@ Each model type implements only the interfaces it needs:
 
 High-level modules (business logic) depend on abstractions (base classes), not concrete implementations. This enables:
 
-- **Pluggable Models**: Swap model implementations without changing business logic
+- **Flexible Model Integration**: Swap model implementations without changing business logic
 - **Testing**: Mock model implementations for unit testing
 - **Evolution**: Add new model types without breaking existing code
 
@@ -60,7 +60,7 @@ High-level modules (business logic) depend on abstractions (base classes), not c
 
 ### IntegratedMLBaseModel
 
-The foundation of all pluggable models, providing essential functionality:
+The foundation of all flexible model integration, providing essential functionality:
 
 ```python
 class IntegratedMLBaseModel(BaseEstimator, ABC):

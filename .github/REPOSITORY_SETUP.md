@@ -1,6 +1,6 @@
 # Repository Setup Guide for GitHub Publication
 
-This guide provides templates and recommendations for optimizing the IntegratedML Pluggable Models repository for maximum discoverability and community engagement.
+This guide provides templates and recommendations for optimizing the IntegratedML Flexible Model Integration repository for maximum discoverability and community engagement.
 
 ## 📝 Repository Description Template
 
@@ -25,7 +25,7 @@ Database-integrated ML demos: 4 enterprise examples showcasing IntegratedML plug
 - `intersystems-iris`
 - `machine-learning`
 - `database-ml`
-- `pluggable-models`
+- `flexible-model-integration`
 - `scikit-learn`
 - `python`
 
@@ -67,7 +67,7 @@ Database-integrated ML demos: 4 enterprise examples showcasing IntegratedML plug
 
 ### LinkedIn Post Template
 ```
-🚀 New open-source project: IntegratedML Pluggable Models Demo
+🚀 New open-source project: IntegratedML Flexible Model Integration Demo
 
 ✅ 4 progressive ML demos (Credit Risk → DNA Analysis)
 ✅ 67ms average latency, 95.4% accuracy validated
@@ -78,12 +78,12 @@ Perfect for learning database-integrated ML workflows!
 
 #MachineLearning #InterSystems #OpenSource #MLOps #DataScience
 
-https://github.com/intersystems-community/pluggable_iml
+https://github.com/intersystems-community/integratedml-flexible-model-integration
 ```
 
 ### Twitter/X Post Template
 ```
-🧬 New: IntegratedML Pluggable Models Demo
+🧬 New: IntegratedML Flexible Model Integration Demo
 
 4 enterprise ML examples:
 🏦 Credit Risk (Beginner)
@@ -95,7 +95,7 @@ B+ code quality, full CI/CD, <100ms predictions
 
 #ML #OpenSource #DataScience
 
-https://github.com/intersystems-community/pluggable_iml
+https://github.com/intersystems-community/integratedml-flexible-model-integration
 ```
 
 ### Reddit Post Ideas
@@ -235,12 +235,12 @@ Enterprise-ready ML demos for IntegratedML: 4 progressive examples from credit r
 
 ### Topics (Comma-separated)
 ```
-integratedml, intersystems-iris, machine-learning, database-ml, pluggable-models, scikit-learn, python, credit-risk-assessment, fraud-detection, sales-forecasting, dna-analysis, enterprise-ml, production-ml, intersystems-community, open-source, demo-project, tutorial, best-practices
+integratedml, intersystems-iris, machine-learning, database-ml, flexible-model-integration, scikit-learn, python, credit-risk-assessment, fraud-detection, sales-forecasting, dna-analysis, enterprise-ml, production-ml, intersystems-community, open-source, demo-project, tutorial, best-practices
 ```
 
 ### Website URL
 ```
-https://intersystems-community.github.io/pluggable_iml/
+https://intersystems-community.github.io/integratedml-flexible-model-integration/
 ```
 
 ---

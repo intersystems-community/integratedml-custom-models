@@ -2,7 +2,7 @@
 
 ## 📚 Complete IntegratedML API Documentation
 
-This comprehensive API reference documents all classes, methods, and configuration options available in the IntegratedML Pluggable Models Demo. Each section includes detailed parameter descriptions, return values, usage examples, and best practices.
+This comprehensive API reference documents all classes, methods, and configuration options available in the IntegratedML Flexible Model Integration Demo. Each section includes detailed parameter descriptions, return values, usage examples, and best practices.
 
 ---
 
@@ -10,7 +10,7 @@ This comprehensive API reference documents all classes, methods, and configurati
 
 ### IntegratedMLBaseModel
 
-The foundational abstract base class for all IntegratedML pluggable models.
+The foundational abstract base class for all IntegratedML flexible model integration.
 
 ```python
 class IntegratedMLBaseModel(BaseEstimator, ABC)
@@ -1023,4 +1023,4 @@ def fit(self, X, y):
     return self
 ```
 
-This comprehensive API reference provides complete documentation for all classes, methods, and configuration options in the IntegratedML Pluggable Models Demo, enabling developers to effectively build, deploy, and maintain custom ML models in database environments.
+This comprehensive API reference provides complete documentation for all classes, methods, and configuration options in the IntegratedML Flexible Model Integration Demo, enabling developers to effectively build, deploy, and maintain custom ML models in database environments.

@@ -1,6 +1,6 @@
 ---
 name: Bug Report
-about: Report a bug to help us improve IntegratedML pluggable models
+about: Report a bug to help us improve IntegratedML flexible model integration
 title: '[BUG] '
 labels: 'bug'
 assignees: ''

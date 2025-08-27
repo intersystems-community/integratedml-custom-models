@@ -2,7 +2,7 @@
 IntegratedML Database Integration Module
 
 This module provides database connectivity, utilities, and IntegratedML integration
-for the pluggable models project.
+for the flexible model integration project.
 """
 
 from .connection import IRISConnection, get_connection, test_connection
