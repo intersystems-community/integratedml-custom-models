@@ -217,3 +217,17 @@ dna_project/
 docker/volumes/iris_data/
 docker/volumes/model_cache/
 docker/volumes/iml_data/
+
+# Internal development documents (not for public repository)
+*verification_report*.md
+*performance_benchmarks*.md
+*VALIDATION_REPORT*.md
+*audit_report*.md
+*Demo_Specification*.md
+*PUBLICATION_READINESS*.md
+*_internal*.md
+*_INTERNAL*.md
+docs/*_report*.md
+docs/*_benchmark*.md
+docs/VALIDATION*.md
+docs/*audit*.md
