@@ -71,6 +71,9 @@ python run_fraud_detection_demo.py
 
 # Sales Forecasting with hybrid models
 python run_sales_forecasting_demo.py
+
+# DNA Similarity Analysis with sequence classification
+python run_dna_similarity_demo.py
 ```
 
 ### Alternative: Standalone Installation
@@ -227,6 +230,7 @@ open http://localhost:8080                        # Application API
 python run_credit_risk_demo.py
 python run_fraud_detection_demo.py
 python run_sales_forecasting_demo.py
+python run_dna_similarity_demo.py
 ```
 
 **🚀 What's New in This Release:**
