@@ -1,0 +1,157 @@
+# DNA Sequence Classification Model Configuration
+# Demonstrates how IntegratedML framework solves original project limitations
+
+model_name: "dna_sequence_classifier"
+model_type: "classification"
+description: "DNA sequence classification with configurable vectorization and algorithms"
+
+# Data Configuration
+data:
+  input_columns: ["sequence"]
+  target_column: "class"
+  test_size: 0.2
+  random_state: 42
+  validation_split: 0.1
+
+# Feature Engineering - Addresses Original Challenge #1: Hardcoded Vectorization
+preprocessing:
+  k_mer_size: 6
+  max_kmers: 5000
+  
+  # Multiple vectorization strategies available (vs original hardcoded SentenceTransformer)
+  vectorization_strategy: "count_vectorizer"  # Options: count_vectorizer, tfidf_vectorizer, sentence_transformer
+  
+  # Count/TF-IDF Vectorizer Parameters
+  ngram_range: [4, 4]
+  max_features: 10000
+  min_df: 1
+  max_df: 1.0
+  
+  # Transformer Parameters (when using sentence_transformer strategy)
+  transformer_model: "stsb-roberta-base-v2"
+  scale_embeddings: false
+
+# Algorithm Configuration - Addresses Original Challenge #2: Hardcoded Algorithm
+algorithm: "multinomial_nb"  # Options: multinomial_nb, random_forest, svm, logistic_regression
+
+# Algorithm-specific hyperparameters
+algorithm_params:
+  # MultinomialNB parameters (default choice, matches original)
+  alpha: 0.1
+  
+  # Alternative configurations for other algorithms:
+  # Random Forest:
+  # n_estimators: 100
+  # max_depth: 10
+  # random_state: 42
+  
+  # SVM:
+  # C: 1.0
+  # kernel: "rbf"
+  # random_state: 42
+  
+  # Logistic Regression:
+  # C: 1.0
+  # max_iter: 1000
+  # random_state: 42
+
+# Training Configuration
+training:
+  batch_size: 32
+  epochs: 1  # For iterative algorithms
+  early_stopping: true
+  patience: 5
+  validation_metric: "accuracy"
+
+# Model Evaluation
+evaluation:
+  metrics: ["accuracy", "precision", "recall", "f1_score", "confusion_matrix"]
+  cross_validation: true
+  cv_folds: 5
+
+# IRIS Database Integration - Addresses Original Challenge #3: Mixed Database Logic
+database:
+  connection_string: "iris://localhost:1972/USER"
+  table_name: "dna_sequences"
+  model_table: "dna_models"
+  auto_deploy: true
+  create_indices: true
+  
+  # Vector search configuration for similarity
+  vector_search:
+    enabled: true
+    vector_column: "sequence_vector"
+    similarity_function: "VECTOR_DOT_PRODUCT"
+    top_k_default: 5
+
+# Logging and Monitoring
+logging:
+  level: "INFO"
+  log_training: true
+  log_predictions: true
+  save_metrics: true
+
+# Model Persistence
+persistence:
+  save_model: true
+  model_format: "pickle"
+  save_preprocessing: true
+  version_control: true
+
+# Deployment Configuration
+deployment:
+  auto_deploy_to_iris: true
+  create_prediction_function: true
+  enable_batch_prediction: true
+  api_endpoint: "/api/dna/classify"
+
+# Alternative Configurations for Different Use Cases
+# Uncomment and modify as needed:
+
+# High-Performance Configuration (Random Forest)
+# algorithm: "random_forest"
+# algorithm_params:
+#   n_estimators: 200
+#   max_depth: 15
+#   n_jobs: -1
+#   random_state: 42
+# preprocessing:
+#   vectorization_strategy: "tfidf_vectorizer"
+#   max_features: 50000
+
+# Deep Learning Configuration (SentenceTransformer)
+# preprocessing:
+#   vectorization_strategy: "sentence_transformer"
+#   transformer_model: "stsb-roberta-base-v2"
+#   scale_embeddings: true
+# algorithm: "logistic_regression"
+# algorithm_params:
+#   C: 10.0
+#   max_iter: 2000
+
+# Memory-Efficient Configuration
+# preprocessing:
+#   max_kmers: 1000
+#   max_features: 5000
+# algorithm: "multinomial_nb"
+# algorithm_params:
+#   alpha: 1.0
+
+# DNA Class Mapping (for reference)
+class_mapping:
+  0: "G protein coupled receptors"
+  1: "tyrosine kinase"
+  2: "tyrosine phosphatase" 
+  3: "synthetase"
+  4: "synthase"
+  5: "ion channel"
+  6: "transcription factor"
+
+# Sample Data for Testing
+sample_sequences:
+  - sequence: "ATGAACTGTCCAGCCCCTGTGGAGATCTCCTATGAGAACATGCGTTTTCTGATATCTCACAACCCT"
+    expected_class: "tyrosine phosphatase"
+  - sequence: "ATGGCGCTGAACCCTTCCGGCACCATGGCCAAGTCCTACTTCATCGAGAACGCC"
+    expected_class: "transcription factor"
+  - sequence: "ATGTCTAAAAAGGAGAAAGACAAACTCACTATTCAATCAATCGCAATCAGCTGC"
+    expected_class: "G protein coupled receptors"

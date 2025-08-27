@@ -1,0 +1,30 @@
+# DNA Similarity Demo Requirements
+# IntegratedML Pluggable Models Framework
+
+# Core ML and Data Processing
+pandas>=1.5.0
+numpy>=1.21.0
+scikit-learn>=1.1.0
+
+# DNA Sequence Analysis
+sentence-transformers>=2.2.0
+
+# Configuration and Serialization
+pyyaml>=6.0
+joblib>=1.2.0
+
+# Logging and Utilities
+colorlog>=6.7.0
+
+# Optional: For enhanced performance
+# numba>=0.56.0  # Accelerated numeric computations
+# faiss-cpu>=1.7.0  # Fast similarity search (alternative to IRIS vector search)
+
+# Development and Testing (optional)
+pytest>=7.0.0
+pytest-cov>=4.0.0
+black>=22.0.0
+flake8>=5.0.0
+
+# Database connectivity (provided by IRIS installation)
+# intersystems-iris>=3.2.0

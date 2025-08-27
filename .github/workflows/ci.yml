@@ -1,0 +1,491 @@
+name: CI - IntegratedML Pluggable Models Framework
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run daily at 6 AM UTC to catch dependency issues
+    - cron: '0 6 * * *'
+
+env:
+  # Consistent Python version for most jobs
+  PYTHON_VERSION: '3.9'
+  # Test configuration
+  PYTEST_TIMEOUT: 300
+  COVERAGE_THRESHOLD: 80
+
+jobs:
+  # Basic code quality and testing across platforms
+  test:
+    name: Test (${{ matrix.os }}, Python ${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ['3.8', '3.9', '3.10', '3.11']
+        exclude:
+          # Reduce matrix size for faster CI, keep coverage on key combinations
+          - os: windows-latest
+            python-version: '3.8'
+          - os: macos-latest
+            python-version: '3.8'
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Shallow clones should be disabled for better relevancy of analysis
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Cache pip packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt', 'setup.py') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Install system dependencies (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y graphviz
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip setuptools wheel
+        pip install -r requirements.txt
+        pip install -e ".[dev]"
+        # Additional testing dependencies
+        pip install pytest-timeout pytest-mock pytest-benchmark
+    
+    - name: Lint with flake8
+      run: |
+        # Stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # Treat all errors as warnings with reasonable complexity limits
+        flake8 . --count --exit-zero --max-complexity=15 --max-line-length=127 --statistics
+    
+    - name: Type checking with mypy
+      run: |
+        mypy shared/ --ignore-missing-imports --show-error-codes
+    
+    - name: Test with pytest
+      run: |
+        pytest \
+          --cov=shared \
+          --cov=demos \
+          --cov-report=xml \
+          --cov-report=term \
+          --cov-fail-under=${{ env.COVERAGE_THRESHOLD }} \
+          --timeout=${{ env.PYTEST_TIMEOUT }} \
+          --verbose \
+          tests/
+    
+    - name: Upload coverage to Codecov
+      if: matrix.os == 'ubuntu-latest' && matrix.python-version == env.PYTHON_VERSION
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: true
+
+  # Demo validation - test each demo end-to-end
+  demo-validation:
+    name: Demo Validation
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        demo: [credit_risk, fraud_detection, sales_forecasting, dna_similarity]
+        
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Cache pip packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ubuntu-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ubuntu-pip-
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -e .
+        # Install demo-specific requirements if they exist
+        if [ -f "demos/${{ matrix.demo }}/requirements.txt" ]; then
+          pip install -r "demos/${{ matrix.demo }}/requirements.txt"
+        fi
+    
+    - name: Validate demo structure
+      run: |
+        echo "Validating ${{ matrix.demo }} demo structure..."
+        # Check required files exist
+        test -f "demos/${{ matrix.demo }}/README.md"
+        test -d "demos/${{ matrix.demo }}/models"
+        test -d "demos/${{ matrix.demo }}/tests"
+        echo "✓ Demo structure is valid"
+    
+    - name: Run demo unit tests
+      run: |
+        echo "Running ${{ matrix.demo }} unit tests..."
+        if [ -d "demos/${{ matrix.demo }}/tests" ]; then
+          pytest "demos/${{ matrix.demo }}/tests/" -v --timeout=300
+        else
+          echo "No tests directory found for ${{ matrix.demo }}"
+          exit 1
+        fi
+    
+    - name: Test demo imports
+      run: |
+        echo "Testing ${{ matrix.demo }} imports..."
+        python -c "
+        import sys
+        sys.path.append('demos/${{ matrix.demo }}')
+        try:
+            import models
+            print('✓ Demo models import successfully')
+        except ImportError as e:
+            print(f'✗ Import failed: {e}')
+            sys.exit(1)
+        "
+    
+    - name: Run demo integration test
+      run: |
+        echo "Running ${{ matrix.demo }} integration test..."
+        cd "demos/${{ matrix.demo }}"
+        if [ -f "tests/run_tests.py" ]; then
+          python tests/run_tests.py
+        elif [ -f "tests/test_integration.py" ]; then
+          pytest tests/test_integration.py -v
+        else
+          echo "No integration test found for ${{ matrix.demo }}"
+        fi
+
+  # Performance benchmarks for critical demos
+  performance-benchmarks:
+    name: Performance Benchmarks
+    runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'  # Skip on scheduled runs
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -e .
+        pip install pytest-benchmark memory-profiler
+    
+    - name: Run performance benchmarks
+      run: |
+        # Fraud detection latency benchmark (target: <100ms)
+        echo "Testing fraud detection latency..."
+        cd demos/fraud_detection
+        python -c "
+        import time
+        import sys
+        sys.path.append('.')
+        from models.ensemble_fraud_detector import EnsembleFraudDetector
+        import numpy as np
+        
+        # Load model and test data
+        model = EnsembleFraudDetector()
+        test_data = np.random.rand(100, 10)  # Simulated features
+        
+        # Warmup
+        for _ in range(10):
+            model.predict(test_data[:1])
+        
+        # Benchmark
+        times = []
+        for _ in range(100):
+            start = time.perf_counter()
+            model.predict(test_data[:1])
+            times.append((time.perf_counter() - start) * 1000)
+        
+        avg_latency = sum(times) / len(times)
+        print(f'Average prediction latency: {avg_latency:.2f}ms')
+        
+        # Validate performance requirement
+        if avg_latency > 100:
+            print(f'❌ Performance regression: {avg_latency:.2f}ms > 100ms target')
+            sys.exit(1)
+        else:
+            print(f'✅ Performance target met: {avg_latency:.2f}ms ≤ 100ms')
+        "
+
+  # Security scanning and vulnerability checks
+  security:
+    name: Security Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install security tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install bandit safety semgrep
+        pip install -r requirements.txt
+    
+    - name: Run Bandit security scan
+      run: |
+        bandit -r shared/ demos/ -f json -o bandit-report.json || true
+        bandit -r shared/ demos/ -f txt
+    
+    - name: Check dependencies with Safety
+      run: |
+        safety check --json --output safety-report.json || true
+        safety check
+    
+    - name: Run Semgrep security scan
+      run: |
+        semgrep --config=auto shared/ demos/ --json --output=semgrep-report.json || true
+    
+    - name: Upload security reports
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: security-reports
+        path: |
+          bandit-report.json
+          safety-report.json
+          semgrep-report.json
+
+  # Documentation validation and link checking
+  docs:
+    name: Documentation Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -e ".[docs]"
+        # Documentation tools
+        pip install markdown-link-check-action linkchecker
+        npm install -g markdown-link-check
+    
+    - name: Test package imports
+      run: |
+        python -c "import shared; print('✓ Package imports successfully')"
+        python -c "import demos; print('✓ Demos package imports successfully')"
+    
+    - name: Test quick start example
+      run: |
+        echo "Testing quick start example..."
+        python examples/quick_start_example.py
+        echo "✓ Quick start example runs successfully"
+    
+    - name: Validate markdown files
+      run: |
+        echo "Checking markdown files for broken links..."
+        find . -name "*.md" -not -path "./node_modules/*" -not -path "./.git/*" | \
+        xargs markdown-link-check --config .github/markdown-link-check-config.json || true
+    
+    - name: Check documentation completeness
+      run: |
+        echo "Checking documentation completeness..."
+        # Verify all demos have README files
+        for demo in demos/*/; do
+          if [ ! -f "${demo}README.md" ]; then
+            echo "❌ Missing README.md in ${demo}"
+            exit 1
+          else
+            echo "✓ Found README.md in ${demo}"
+          fi
+        done
+    
+    - name: Test documentation examples
+      run: |
+        echo "Testing code examples in documentation..."
+        # Extract and test Python code blocks from README files
+        python -c "
+        import re
+        import subprocess
+        import tempfile
+        import os
+        
+        def test_code_block(code, filename):
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+                f.write(code)
+                f.flush()
+                try:
+                    result = subprocess.run(['python', '-m', 'py_compile', f.name], 
+                                          capture_output=True, text=True)
+                    if result.returncode == 0:
+                        print(f'✓ Code block in {filename} compiles successfully')
+                    else:
+                        print(f'❌ Code block in {filename} has syntax errors:')
+                        print(result.stderr)
+                finally:
+                    os.unlink(f.name)
+        
+        # Test main README
+        with open('README.md', 'r') as f:
+            content = f.read()
+            code_blocks = re.findall(r'```python(.*?)```', content, re.DOTALL)
+            for i, code in enumerate(code_blocks):
+                if 'import' in code and len(code.strip()) > 10:
+                    test_code_block(code, f'README.md block {i+1}')
+        "
+
+  # Docker integration testing
+  docker-test:
+    name: Docker Integration Test
+    runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+    
+    - name: Test Docker Compose setup
+      run: |
+        echo "Testing Docker Compose configuration..."
+        # Validate docker-compose.yml syntax
+        docker-compose config
+        echo "✓ Docker Compose configuration is valid"
+    
+    - name: Test Docker environment setup
+      run: |
+        echo "Testing Docker initialization script..."
+        # Make sure the script is executable and runs without errors
+        chmod +x docker/docker-init.sh
+        # Test script syntax (don't actually run to avoid resource usage)
+        bash -n docker/docker-init.sh
+        echo "✓ Docker initialization script is valid"
+
+  # Integration test with minimal IRIS simulation
+  integration-test:
+    name: Integration Test (Standalone)
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -e .
+    
+    - name: Test framework in standalone mode
+      run: |
+        echo "Testing framework without IRIS dependency..."
+        python -c "
+        import sys
+        sys.path.append('.')
+        
+        # Test shared components
+        from shared.models.base import IntegratedMLBaseModel
+        from shared.models.classification import ClassificationModel
+        from shared.models.regression import RegressionModel
+        from shared.models.ensemble import EnsembleModel
+        
+        print('✓ All base models import successfully')
+        
+        # Test demo models
+        sys.path.append('demos/credit_risk')
+        from models.credit_risk_classifier import CustomCreditRiskClassifier
+        
+        sys.path.append('demos/fraud_detection')
+        from models.ensemble_fraud_detector import EnsembleFraudDetector
+        
+        print('✓ Demo models import successfully')
+        
+        # Test basic functionality
+        credit_model = CustomCreditRiskClassifier()
+        fraud_model = EnsembleFraudDetector()
+        
+        print('✓ Models instantiate successfully')
+        print('✅ Standalone integration test passed')
+        "
+
+  # Code quality gate - must pass for PR merge
+  quality-gate:
+    name: Quality Gate
+    runs-on: ubuntu-latest
+    needs: [test, demo-validation, security, docs]
+    if: always()
+    
+    steps:
+    - name: Check job results
+      run: |
+        echo "Checking quality gate requirements..."
+        
+        # Check if critical jobs passed
+        if [[ "${{ needs.test.result }}" != "success" ]]; then
+          echo "❌ Test job failed"
+          exit 1
+        fi
+        
+        if [[ "${{ needs.demo-validation.result }}" != "success" ]]; then
+          echo "❌ Demo validation failed"
+          exit 1
+        fi
+        
+        if [[ "${{ needs.security.result }}" != "success" ]]; then
+          echo "❌ Security check failed"
+          exit 1
+        fi
+        
+        if [[ "${{ needs.docs.result }}" != "success" ]]; then
+          echo "❌ Documentation validation failed"
+          exit 1
+        fi
+        
+        echo "✅ All quality gate requirements passed"

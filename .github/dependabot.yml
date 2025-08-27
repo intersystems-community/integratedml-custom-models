@@ -1,0 +1,242 @@
+version: 2
+updates:
+  # Python dependencies
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "America/New_York"
+    open-pull-requests-limit: 10
+    assignees:
+      - "intersystems-community/integratedml-maintainers"
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "python"
+    
+    # Dependency groups for related packages
+    groups:
+      # Core ML dependencies
+      ml-core:
+        patterns:
+          - "numpy"
+          - "pandas"
+          - "scikit-learn"
+          - "scipy"
+      
+      # Deep learning frameworks
+      deep-learning:
+        patterns:
+          - "tensorflow"
+          - "torch"
+          - "torchvision"
+          - "keras"
+      
+      # Advanced ML libraries
+      ml-advanced:
+        patterns:
+          - "lightgbm"
+          - "xgboost"
+          - "prophet"
+          - "optuna"
+          - "hyperopt"
+      
+      # Visualization and analysis
+      visualization:
+        patterns:
+          - "matplotlib"
+          - "seaborn"
+          - "plotly"
+          - "bokeh"
+      
+      # Development and testing
+      dev-tools:
+        patterns:
+          - "pytest"
+          - "pytest-*"
+          - "black"
+          - "flake8"
+          - "mypy"
+          - "pre-commit"
+          - "bandit"
+          - "safety"
+      
+      # Jupyter and notebooks
+      jupyter:
+        patterns:
+          - "jupyter"
+          - "notebook"
+          - "jupyterlab"
+          - "ipython"
+          - "ipykernel"
+      
+      # Utilities and infrastructure
+      utilities:
+        patterns:
+          - "requests"
+          - "pyyaml"
+          - "jsonschema"
+          - "click"
+          - "tqdm"
+    
+    # Version strategy and constraints
+    versioning-strategy: "increase"
+    target-branch: "develop"
+    
+    # Ignore specific dependencies that need manual review
+    ignore:
+      # Pin InterSystems-specific packages to avoid breaking changes
+      - dependency-name: "intersystems-*"
+        update-types: ["version-update:semver-major"]
+      
+      # Major ML framework updates need careful testing
+      - dependency-name: "tensorflow"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "scikit-learn"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "lightgbm"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "prophet"
+        update-types: ["version-update:semver-major"]
+
+  # GitHub Actions workflow dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "06:00"
+      timezone: "America/New_York"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "ci"
+    
+    # Group GitHub Actions updates
+    groups:
+      github-actions:
+        patterns:
+          - "actions/*"
+          - "github/*"
+          - "codecov/*"
+
+  # Docker dependencies (if we have Dockerfiles)
+  - package-ecosystem: "docker"
+    directory: "/docker"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "06:00"
+      timezone: "America/New_York"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "docker"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "docker"
+    
+    # Conservative approach for base images
+    ignore:
+      # Only allow patch updates for base images to maintain stability
+      - dependency-name: "intersystemsdc/iris-community"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "python"
+        update-types: ["version-update:semver-major"]
+
+  # Demo-specific dependencies
+  - package-ecosystem: "pip"
+    directory: "/demos/credit_risk"
+    schedule:
+      interval: "weekly"
+      day: "thursday"
+      time: "06:00"
+      timezone: "America/New_York"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "deps(credit-risk)"
+    labels:
+      - "dependencies"
+      - "demo:credit-risk"
+    target-branch: "develop"
+
+  - package-ecosystem: "pip"
+    directory: "/demos/fraud_detection"
+    schedule:
+      interval: "weekly"
+      day: "thursday"
+      time: "06:00"
+      timezone: "America/New_York"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "deps(fraud-detection)"
+    labels:
+      - "dependencies"
+      - "demo:fraud-detection"
+    target-branch: "develop"
+
+  - package-ecosystem: "pip"
+    directory: "/demos/sales_forecasting"
+    schedule:
+      interval: "weekly"
+      day: "thursday"
+      time: "06:00"
+      timezone: "America/New_York"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "deps(sales-forecasting)"
+    labels:
+      - "dependencies"
+      - "demo:sales-forecasting"
+    target-branch: "develop"
+
+  - package-ecosystem: "pip"
+    directory: "/demos/dna_similarity"
+    schedule:
+      interval: "weekly"
+      day: "thursday"
+      time: "06:00"
+      timezone: "America/New_York"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "deps(dna-similarity)"
+    labels:
+      - "dependencies"
+      - "demo:dna-similarity"
+    target-branch: "develop"
+
+# Global configuration notes:
+# 
+# Security Updates:
+# - Dependabot automatically creates security updates for vulnerable dependencies
+# - These bypass the normal schedule and are created immediately
+# - Security updates target the default branch (main) directly
+#
+# Review Process:
+# - All dependency updates require review from maintainers
+# - Major version updates are ignored for critical ML libraries to prevent breaking changes
+# - Updates are grouped logically to reduce PR noise
+#
+# Testing Integration:
+# - All dependency update PRs trigger the full CI/CD pipeline
+# - Demo validation workflow tests all affected demos
+# - Performance benchmarks verify no regression in critical demos
+#
+# InterSystems Integration:
+# - IRIS-specific packages are handled conservatively
+# - Docker base images follow conservative update strategy
+# - IntegratedML compatibility is verified through demo tests
+#
+# Community Involvement:
+# - Dependency updates are labeled appropriately for community visibility
+# - Commit messages follow conventional commit format
+# - Updates are scheduled to spread load across the week
