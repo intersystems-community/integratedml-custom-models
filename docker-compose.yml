@@ -1,12 +1,14 @@
-# IntegratedML Flexible Model Integration Docker Compose Configuration
-# Based on RAG templates pattern for IRIS Community Edition
+# IntegratedML Flexible Model Integration - Simplified Docker Setup
+# IRIS database only - users run notebooks in VS Code locally
 
 version: '3.8'
 
 services:
   iris:
-    image: ${IRIS_IMAGE:-intersystemsdc/iris-community:latest}
-    container_name: flexible_model_integration_iris
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.iris
+    container_name: integratedml_iris
     ports:
       - "${IRIS_PORT:-1972}:1972"
       - "${IRIS_WEB_PORT:-52773}:52773"
@@ -21,8 +23,6 @@ services:
       - ./docker/iris-init:/opt/irisapp/init:ro
       - ./docker/iris-config:/opt/irisapp/config:ro
       - ./data:/opt/irisapp/shared/data
-    networks:
-      - iml_network
     healthcheck:
       test: ["CMD", "iris", "session", "iris", "-U", "${IRIS_NAMESPACE:-USER}", "##class(%SYSTEM.Process).CurrentDirectory()"]
       interval: 30s
@@ -39,94 +39,6 @@ services:
           memory: 2G
           cpus: '1.0'
 
-  iml_app:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile
-      args:
-        - PYTHON_VERSION=${PYTHON_VERSION:-3.11}
-    container_name: flexible_model_integration_app
-    ports:
-      - "${IML_APP_PORT:-8080}:8080"
-    working_dir: /app
-    command: ["python", "-m", "shared.database.setup_database"]
-    volumes:
-      - .:/app
-      - iml_data:/app/data
-      - model_cache:/app/models/cache
-    environment:
-      - IRIS_HOST=iris
-      - IRIS_PORT=1972
-      - IRIS_USERNAME=${IRIS_USERNAME:-demo}
-      - IRIS_PASSWORD=${IRIS_PASSWORD:-demo}
-      - IRIS_NAMESPACE=${IRIS_NAMESPACE:-USER}
-      - PYTHONPATH=/app
-      - IML_MODEL_PATH=/app/models
-      - IML_DATA_PATH=/app/data
-      - LOG_LEVEL=${LOG_LEVEL:-INFO}
-      - APP_ENV=${APP_ENV:-development}
-    depends_on:
-      iris:
-        condition: service_healthy
-    networks:
-      - iml_network
-    healthcheck:
-      test: ["CMD", "python", "-c", "import shared.database.connection; shared.database.connection.test_connection()"]
-      interval: 45s
-      timeout: 15s
-      retries: 3
-      start_period: 90s
-    restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          memory: 2G
-          cpus: '1.0'
-        reservations:
-          memory: 1G
-          cpus: '0.5'
-
-  jupyter:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile
-      target: jupyter
-    container_name: flexible_model_integration_jupyter
-    ports:
-      - "${JUPYTER_PORT:-8888}:8888"
-    working_dir: /app
-    command: ["jupyter", "lab", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root", "--NotebookApp.token=''", "--NotebookApp.password=''"]
-    volumes:
-      - .:/app
-      - iml_data:/app/data
-      - model_cache:/app/models/cache
-    environment:
-      - IRIS_HOST=iris
-      - IRIS_PORT=1972
-      - IRIS_USERNAME=${IRIS_USERNAME:-demo}
-      - IRIS_PASSWORD=${IRIS_PASSWORD:-demo}
-      - IRIS_NAMESPACE=${IRIS_NAMESPACE:-USER}
-      - PYTHONPATH=/app
-      - IML_MODEL_PATH=/app/models
-      - IML_DATA_PATH=/app/data
-      - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    depends_on:
-      iris:
-        condition: service_healthy
-      iml_app:
-        condition: service_healthy
-    networks:
-      - iml_network
-    restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-          cpus: '0.5'
-        reservations:
-          memory: 512M
-          cpus: '0.25'
-
 volumes:
   iris_data:
     driver: local
@@ -134,22 +46,3 @@ volumes:
       type: none
       o: bind
       device: ./docker/volumes/iris_data
-  iml_data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./docker/volumes/iml_data
-  model_cache:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./docker/volumes/model_cache
-
-networks:
-  iml_network:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.21.0.0/16

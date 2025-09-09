@@ -19,55 +19,67 @@ A demonstration framework for integrating custom machine learning models with In
 ## Quick Start
 
 ### Prerequisites
-- Docker and Docker Compose
-- At least 8GB RAM for containers
-- 20GB free disk space
+- **Docker & Docker Compose** (for IRIS database)
+- **Python 3.8+** (for local development)
+- **VS Code** (recommended for notebooks)
+- At least 4GB RAM for IRIS container
 
-### Docker Setup
+### 🚀 Simplified Setup
 
 ```bash
 # Clone the repository
 git clone https://github.com/intersystems-community/integratedml-flexible-model-integration.git
 cd integratedml-flexible-model-integration
 
-# Initialize Docker environment
-chmod +x docker/docker-init.sh
-./docker/docker-init.sh
+# Complete setup (dependencies + IRIS database)
+make setup
 
-# Configure environment
-cp .env.example .env
-# Edit .env with your preferred settings
-
-# Start IRIS database and application services
-docker-compose up --build -d
+# Open notebooks in VS Code
+make notebooks
 ```
 
-### Run Demo Examples
+That's it! 🎉
+
+### Manual Setup (Alternative)
 
 ```bash
-# Credit Risk Assessment with IRIS IntegratedML
-python run_credit_risk_demo.py
-
-# Fraud Detection with ensemble models
-python run_fraud_detection_demo.py
-
-# Sales Forecasting with hybrid models
-python run_sales_forecasting_demo.py
-
-# DNA Similarity Analysis with sequence classification
-python run_dna_similarity_demo.py
-```
-
-### Alternative: Standalone Installation
-
-```bash
-# For development without Docker
+# 1. Install Python dependencies
 pip install -r requirements.txt
-pip install -e .
 
-# Launch interactive notebooks
-jupyter notebook demos/credit_risk/notebooks/credit_risk_demo.ipynb
+# 2. Configure environment
+cp .env.example .env
+
+# 3. Start IRIS database only
+docker-compose up -d iris
+
+# 4. Open notebooks in VS Code
+code notebooks/ demos/
 ```
+
+### Available Notebooks
+
+Explore these comprehensive demos directly in VS Code:
+
+- [**📓 Quick Start**](notebooks/Iris_IntegratedML_Quickstart.ipynb) - Get familiar with IRIS IntegratedML
+- [**💳 Credit Risk**](demos/credit_risk/notebooks/01_Credit_Risk_Complete_Demo.ipynb) - Financial risk assessment
+- [**🔒 Fraud Detection**](demos/fraud_detection/notebooks/01_Fraud_Detection_Complete_Demo.ipynb) - Real-time fraud prevention
+- [**📈 Sales Forecasting**](demos/sales_forecasting/notebooks/01_Sales_Forecasting_Complete_Demo.ipynb) - Revenue prediction
+- [**🧬 DNA Similarity**](demos/dna_similarity/notebooks/01_DNA_Similarity_Complete_Demo.ipynb) - Genomic analysis
+- [**📊 Time Series**](demos/time_series_native/notebooks/01_Time_Series_Native_Complete_Demo.ipynb) - Native IRIS time series
+
+### 🛠️ Development Commands
+
+```bash
+make help           # Show all available commands
+make start          # Start IRIS database
+make stop           # Stop IRIS database
+make test           # Run all tests
+make demos          # Run all demo scripts
+make status         # Check system status
+```
+
+### What's New?
+**Simplified Development Workflow**: No more complex multi-container setup! Just IRIS database + local Python development in VS Code.
 
 ## Demo Examples
 

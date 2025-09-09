@@ -1,0 +1,42 @@
+# Data Science Project Rules for IntegratedML
+# Following cookiecutter data science best practices + modern tooling
+
+## Dependency Management
+- Use `uv` for fast, reliable package management when possible
+- Pin exact versions in requirements.txt for reproducibility
+- Keep dependencies minimal - avoid bloat
+
+## Code Organization
+- Heavy logic in .py modules under shared/ and demos/
+- Keep notebooks light - use for exploration and presentation
+- Use type hints and docstrings throughout
+
+## Reproducibility
+- Log all preprocessing steps and data transformations
+- Save model artifacts with versioning information
+- Include confidence intervals in model benchmarks
+- Use DVC for large data/model versioning (when applicable)
+
+## Development Workflow
+- Use Makefile for common tasks and automation
+- IRIS database via Docker, Python development locally
+- VS Code for notebook development (not Jupyter server)
+- Test-driven development with pytest
+
+## Data Hygiene
+- Validate inputs at module boundaries
+- Document data assumptions and limitations
+- Keep raw data immutable
+- Track data lineage and transformations
+
+## Model Development
+- Benchmark against baseline models
+- Report robust metrics with confidence intervals
+- Embed key plots and link to saved artifacts
+- Optimize for readability over cleverness
+
+## Notebook Guidelines
+- Clear all outputs before committing
+- Use markdown for explanations and context
+- Import shared utilities rather than duplicating code
+- Include executive summary and next steps
