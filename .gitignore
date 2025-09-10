@@ -230,7 +230,8 @@ docker/volumes/iml_data/
 docs/*_report*.md
 docs/*_benchmark*.md
 docs/VALIDATION*.md
-docs/*audit*.mdnotebooks/
+docs/*audit*.md
+notebooks/
 .ipynb_checkpoints/
 .venv/
 .uv/
