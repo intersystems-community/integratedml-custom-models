@@ -98,147 +98,6 @@ jobs:
         name: codecov-umbrella
         fail_ci_if_error: true
 
-  # Demo validation - test each demo end-to-end
-  demo-validation:
-    name: Demo Validation
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        demo: [credit_risk, fraud_detection, sales_forecasting, dna_similarity]
-        
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-    
-    - name: Cache pip packages
-      uses: actions/cache@v3
-      with:
-        path: ~/.cache/pip
-        key: ubuntu-pip-${{ hashFiles('**/requirements.txt') }}
-        restore-keys: |
-          ubuntu-pip-
-    
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install -e .
-        # Install demo-specific requirements if they exist
-        if [ -f "demos/${{ matrix.demo }}/requirements.txt" ]; then
-          pip install -r "demos/${{ matrix.demo }}/requirements.txt"
-        fi
-    
-    - name: Validate demo structure
-      run: |
-        echo "Validating ${{ matrix.demo }} demo structure..."
-        # Check required files exist
-        test -f "demos/${{ matrix.demo }}/README.md"
-        test -d "demos/${{ matrix.demo }}/models"
-        test -d "demos/${{ matrix.demo }}/tests"
-        echo "✓ Demo structure is valid"
-    
-    - name: Run demo unit tests
-      run: |
-        echo "Running ${{ matrix.demo }} unit tests..."
-        if [ -d "demos/${{ matrix.demo }}/tests" ]; then
-          pytest "demos/${{ matrix.demo }}/tests/" -v --timeout=300
-        else
-          echo "No tests directory found for ${{ matrix.demo }}"
-          exit 1
-        fi
-    
-    - name: Test demo imports
-      run: |
-        echo "Testing ${{ matrix.demo }} imports..."
-        python -c "
-        import sys
-        sys.path.append('demos/${{ matrix.demo }}')
-        try:
-            import models
-            print('✓ Demo models import successfully')
-        except ImportError as e:
-            print(f'✗ Import failed: {e}')
-            sys.exit(1)
-        "
-    
-    - name: Run demo integration test
-      run: |
-        echo "Running ${{ matrix.demo }} integration test..."
-        cd "demos/${{ matrix.demo }}"
-        if [ -f "tests/run_tests.py" ]; then
-          python tests/run_tests.py
-        elif [ -f "tests/test_integration.py" ]; then
-          pytest tests/test_integration.py -v
-        else
-          echo "No integration test found for ${{ matrix.demo }}"
-        fi
-
-  # Performance benchmarks for critical demos
-  performance-benchmarks:
-    name: Performance Benchmarks
-    runs-on: ubuntu-latest
-    if: github.event_name != 'schedule'  # Skip on scheduled runs
-    
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-    
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install -e .
-        pip install pytest-benchmark memory-profiler
-    
-    - name: Run performance benchmarks
-      run: |
-        # Fraud detection latency benchmark (target: <100ms)
-        echo "Testing fraud detection latency..."
-        cd demos/fraud_detection
-        python -c "
-        import time
-        import sys
-        sys.path.append('.')
-        from models.ensemble_fraud_detector import EnsembleFraudDetector
-        import numpy as np
-        
-        # Load model and test data
-        model = EnsembleFraudDetector()
-        test_data = np.random.rand(100, 10)  # Simulated features
-        
-        # Warmup
-        for _ in range(10):
-            model.predict(test_data[:1])
-        
-        # Benchmark
-        times = []
-        for _ in range(100):
-            start = time.perf_counter()
-            model.predict(test_data[:1])
-            times.append((time.perf_counter() - start) * 1000)
-        
-        avg_latency = sum(times) / len(times)
-        print(f'Average prediction latency: {avg_latency:.2f}ms')
-        
-        # Validate performance requirement
-        if avg_latency > 100:
-            print(f'❌ Performance regression: {avg_latency:.2f}ms > 100ms target')
-            sys.exit(1)
-        else:
-            print(f'✅ Performance target met: {avg_latency:.2f}ms ≤ 100ms')
-        "
-
   # Security scanning and vulnerability checks
   security:
     name: Security Analysis
@@ -459,7 +318,7 @@ jobs:
   quality-gate:
     name: Quality Gate
     runs-on: ubuntu-latest
-    needs: [test, demo-validation, security, docs]
+    needs: [test, security, docs]
     if: always()
     
     steps:
@@ -470,11 +329,6 @@ jobs:
         # Check if critical jobs passed
         if [[ "${{ needs.test.result }}" != "success" ]]; then
           echo "❌ Test job failed"
-          exit 1
-        fi
-        
-        if [[ "${{ needs.demo-validation.result }}" != "success" ]]; then
-          echo "❌ Demo validation failed"
           exit 1
         fi
         

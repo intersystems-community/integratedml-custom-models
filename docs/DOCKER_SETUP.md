@@ -99,13 +99,7 @@ python shared/database/data_loader.py
 
 ### Manual Setup
 
-Connect to IRIS and run the initialization scripts:
-
-```sql
--- Connect to IRIS SQL interface
--- Run the initialization script
-DO $SYSTEM.SQL.Execute("^%IRIS.DFN","InitializeIntegratedML")
-```
+Connect to IRIS and run the initialization scripts located in `docker/iris-init/`. The main script is [`01_setup_integratedml.sql`](../docker/iris-init/01_setup_integratedml.sql), with additional scripts for populating data.
 
 ## Running Demos
 

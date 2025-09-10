@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- **Notebook-first Workflow**: The project has been pivoted to a notebooks-first approach, removing the web dashboard in favor of a more flexible, code-centric workflow.
+- **IRIS SQL Setup**: Scripts moved from `dashboard/` to `docker/iris-init/` and renamed with numeric prefixes (`02_`, `03_`, `04_`, `99_`) for ordered execution.
+- **Renamed Notebooks**:
+  - Credit Risk: `credit_risk_demo.ipynb` → `01_Credit_Risk_Complete_Demo.ipynb`
+  - Fraud Detection: `fraud_detection_demo.ipynb` → `01_Fraud_Detection_Complete_Demo.ipynb`
+  - Sales Forecasting: `Sales_Forecasting_Demo.ipynb` → `01_Sales_Forecasting_Complete_Demo.ipynb`
+
+### Removed
+- **Web Dashboard**: The entire Flask-based web dashboard and Redash integration has been removed. This includes:
+  - `dashboard/` directory and all its contents.
+  - `iris_ml_dashboard.py` main application.
+  - `templates/dashboard.html` and related assets.
+  - All dashboard-specific query runners, automation, and debug scripts.
+  - `redash-iris-dashboard-architecture.md` and other dashboard-related architecture documents.
+- **Docker Services**: Redash, worker, and postgres services were removed from `docker-compose.yml`.
+
+### Added
+- **Shared Plotting Utilities**: New shared plotting functions added at `notebooks/utils/plotting.py` to standardize visualizations across notebooks.
+- **New Notebooks**:
+  - `notebooks/Iris_IntegratedML_Quickstart.ipynb`: A new quickstart guide for getting started with IntegratedML.
+  - `demos/dna_similarity/notebooks/01_DNA_Similarity_Complete_Demo.ipynb`: A new demo for DNA sequence classification.
+  - `demos/time_series_native/notebooks/01_Time_Series_Native_Complete_Demo.ipynb`: A new demo showcasing native time series forecasting.
+
+### CI
+- Removed all dashboard-related jobs, steps, and references from the `.github/workflows/ci.yml` workflow.
+
+### Env
+- Removed `REDASH_*` variables from `.env.example`.
+
 ## [1.0.0] - 2024-08-25
 
 ### Added

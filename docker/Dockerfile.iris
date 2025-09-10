@@ -1,0 +1,55 @@
+# Custom IRIS Dockerfile with IntegratedML support
+FROM intersystemsdc/iris-community:latest
+
+USER root
+
+# Install system dependencies needed for Python packages
+RUN apt-get update && apt-get install -y \
+    python3-pip \
+    python3-dev \
+    gcc \
+    g++ \
+    make \
+    libssl-dev \
+    libffi-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install IntegratedML Python dependencies (use latest compatible versions)
+RUN pip3 install --no-cache-dir \
+    scikit-learn \
+    pandas \
+    numpy \
+    scipy \
+    joblib \
+    matplotlib \
+    seaborn \
+    xgboost \
+    lightgbm
+
+# Install basic AutoML dependencies
+RUN pip3 install --no-cache-dir \
+    optuna \
+    catboost
+
+# Install additional ML packages that work with IntegratedML
+RUN pip3 install --no-cache-dir \
+    mlxtend \
+    imbalanced-learn
+
+# Verify installation
+RUN python3 -c "import sklearn; print(f'scikit-learn version: {sklearn.__version__}')" && \
+    python3 -c "import pandas; print(f'pandas version: {pandas.__version__}')" && \
+    python3 -c "import numpy; print(f'numpy version: {numpy.__version__}')" && \
+    python3 -c "import xgboost; print(f'xgboost version: {xgboost.__version__}')" && \
+    echo "All IntegratedML packages installed successfully!"
+
+# Copy initialization scripts
+COPY docker/iris-init/ /opt/irisapp/init/
+
+# Make sure initialization scripts are executable
+RUN chmod +x /opt/irisapp/init/*.sh
+
+USER irisowner
+
+# Run the standard IRIS entrypoint
+ENTRYPOINT ["/tini", "--", "/docker-entrypoint.sh"]

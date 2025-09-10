@@ -8,6 +8,7 @@ Welcome to the comprehensive guide for getting started with IntegratedML Flexibl
 - [Installation & Setup](#-installation--setup)
 - [Quick Verification](#-quick-verification)
 - [Demo Portfolio Overview](#-demo-portfolio-overview)
+- [Using the Notebooks](#-using-the-notebooks)
 - [Demo Walkthroughs](#-demo-walkthroughs)
 - [Common Issues & Troubleshooting](#-common-issues--troubleshooting)
 - [Next Steps](#-next-steps)
@@ -29,6 +30,35 @@ Welcome to the comprehensive guide for getting started with IntegratedML Flexibl
 - **Credit Risk**: Scikit-learn, pandas, numpy
 - **Fraud Detection**: XGBoost, scikit-learn (GPU optional)
 - **Sales Forecasting**: Prophet, LightGBM (additional system dependencies)
+
+## 🚀 Using the Notebooks
+
+The primary way to interact with the demos is through Jupyter Notebooks.
+
+### Quickstart
+1.  **Launch Jupyter**:
+    ```bash
+    jupyter lab
+    ```
+    or
+    ```bash
+    jupyter notebook
+    ```
+2.  **Open the Quickstart Notebook**:
+    - [notebooks/Iris_IntegratedML_Quickstart.ipynb](../notebooks/Iris_IntegratedML_Quickstart.ipynb)
+
+3.  **Explore Domain-Specific Notebooks**:
+    - [demos/credit_risk/notebooks/01_Credit_Risk_Complete_Demo.ipynb](../demos/credit_risk/notebooks/01_Credit_Risk_Complete_Demo.ipynb)
+    - [demos/fraud_detection/notebooks/01_Fraud_Detection_Complete_Demo.ipynb](../demos/fraud_detection/notebooks/01_Fraud_Detection_Complete_Demo.ipynb)
+    - [demos/sales_forecasting/notebooks/01_Sales_Forecasting_Complete_Demo.ipynb](../demos/sales_forecasting/notebooks/01_Sales_Forecasting_Complete_Demo.ipynb)
+    - [demos/dna_similarity/notebooks/01_DNA_Similarity_Complete_Demo.ipynb](../demos/dna_similarity/notebooks/01_DNA_Similarity_Complete_Demo.ipynb)
+    - [demos/time_series_native/notebooks/01_Time_Series_Native_Complete_Demo.ipynb](../demos/time_series_native/notebooks/01_Time_Series_Native_Complete_Demo.ipynb)
+
+### Shared Modules
+The notebooks utilize shared modules for common tasks:
+- **Database Connection**: [`shared/database/connection.py`](../shared/database/connection.py)
+- **Data Loading**: [`shared/database/data_loader.py`](../shared/database/data_loader.py)
+- **Model Management**: [`shared/database/model_manager.py`](../shared/database/model_manager.py)
 
 ## ⚡ Installation & Setup
 
@@ -178,7 +208,7 @@ python data/generate_sample_data.py
 #### Step 3: Train and Test the Model
 ```bash
 # Launch interactive notebook
-jupyter notebook notebooks/credit_risk_demo.ipynb
+jupyter notebook notebooks/01_Credit_Risk_Complete_Demo.ipynb
 
 # OR run the Python script directly
 python -m demos.credit_risk.models.credit_risk_classifier
@@ -246,7 +276,7 @@ The fraud detection system combines:
 #### Step 5: Real-time Testing
 ```bash
 # Launch interactive demo
-jupyter notebook notebooks/fraud_detection_demo.ipynb
+jupyter notebook notebooks/01_Fraud_Detection_Complete_Demo.ipynb
 
 # Test ensemble performance
 python -m pytest tests/test_performance.py -v
@@ -278,7 +308,7 @@ python data/generate_sales_data.py
 #### Step 3: Train Hybrid Model
 ```bash
 # Launch forecasting notebook
-jupyter notebook notebooks/Sales_Forecasting_Demo.ipynb
+jupyter notebook notebooks/01_Sales_Forecasting_Complete_Demo.ipynb
 ```
 
 #### Step 4: Explore Hybrid Architecture

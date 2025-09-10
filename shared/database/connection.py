@@ -136,7 +136,7 @@ class IRISConnection:
         
         try:
             # IRIS REST API endpoint for SQL execution
-            web_port = os.getenv('IRIS_WEB_PORT', 52773)
+            web_port = os.getenv('IRIS_WEB_PORT', 52776)
             base_url = f"http://{self.host}:{web_port}"
             
             # Prepare SQL with parameters

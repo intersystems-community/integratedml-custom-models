@@ -4,6 +4,14 @@
 
 The IntegratedML Flexible Model Integration Demo showcases a sophisticated architecture that bridges enterprise database capabilities with modern machine learning workflows. This guide provides a comprehensive technical deep-dive into the system design, base classes, integration patterns, and architectural decisions.
 
+### Notebook Architecture
+
+The project is structured around a series of Jupyter notebooks that provide interactive, domain-specific demonstrations.
+
+- **Per-Domain Notebooks**: Each demo resides in its own directory under `demos/*/notebooks/`, providing a self-contained environment for exploration.
+- **Shared Plotting Utilities**: Common visualization functions are centralized in [`notebooks/utils/plotting.py`](../notebooks/utils/plotting.py) to ensure consistent and reusable plotting code.
+- **Shared Python Modules**: Core database, data loading, and model management logic is located in the [`shared/`](../shared/) directory to promote code reuse and maintainability across all notebooks.
+
 ### Architecture Goals
 
 - **Database-Native ML**: Execute ML models directly within database environments without data movement
