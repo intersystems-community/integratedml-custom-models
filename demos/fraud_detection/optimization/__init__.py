@@ -17,7 +17,7 @@ Author: IntegratedML Pluggable Models Team
 """
 
 from .model_optimization import ModelOptimizer, PredictionCache
-from .memory_optimization import MemoryOptimizer, DataBuffer
+from .memory_optimization import MemoryOptimizer
 from .latency_optimization import LatencyOptimizer, PerformanceMonitor
 from .batch_optimization import BatchProcessor, StreamProcessor
 from .caching_strategies import FeatureCache, ModelCache, IntelligentCache
@@ -26,7 +26,6 @@ __all__ = [
     'ModelOptimizer',
     'PredictionCache', 
     'MemoryOptimizer',
-    'DataBuffer',
     'LatencyOptimizer',
     'PerformanceMonitor',
     'BatchProcessor',
