@@ -235,3 +235,13 @@ notebooks/
 .ipynb_checkpoints/
 .venv/
 .uv/
+
+# Allow tracked demo notebooks (outputs must remain stripped)
+!demos/credit_risk/notebooks/
+!demos/fraud_detection/notebooks/
+!demos/sales_forecasting/notebooks/
+!demos/dna_similarity/notebooks/
+!demos/credit_risk/notebooks/01_Credit_Risk_Complete_Demo.ipynb
+!demos/fraud_detection/notebooks/01_Fraud_Detection_Complete_Demo.ipynb
+!demos/sales_forecasting/notebooks/01_Sales_Forecasting_Complete_Demo.ipynb
+!demos/dna_similarity/notebooks/01_DNA_Similarity_Complete_Demo.ipynb

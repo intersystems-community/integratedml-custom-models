@@ -51,7 +51,8 @@ class RealTimeFeatureProcessor:
                  enable_risk_features: bool = True,
                  parallel_processing: bool = True,
                  cache_size: int = 10000,
-                 performance_target_ms: float = 100.0):
+                 performance_target_ms: float = 100.0,
+                 **kwargs):
         """
         Initialize real-time feature processor.
         
@@ -82,6 +83,15 @@ class RealTimeFeatureProcessor:
         self.parallel_processing = parallel_processing
         self.cache_size = cache_size
         self.performance_target_ms = performance_target_ms
+
+        # Backward-compatibility aliases (from notebooks/tests)
+        # - enable_parallel_processing: alias for parallel_processing
+        # - enable_caching: boolean toggle for feature cache (accepted but optional)
+        # - cache_ttl_seconds: TTL for cache entries (accepted but optional)
+        if 'enable_parallel_processing' in kwargs and kwargs['enable_parallel_processing'] is not None:
+            self.parallel_processing = bool(kwargs['enable_parallel_processing'])
+        self.enable_caching = bool(kwargs.get('enable_caching', False))
+        self.cache_ttl_seconds = int(kwargs.get('cache_ttl_seconds', 300))
         
         # Initialize feature engineers
         self.feature_engineers = {}

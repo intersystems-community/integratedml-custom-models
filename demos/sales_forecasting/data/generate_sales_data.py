@@ -400,7 +400,7 @@ class SalesDataGenerator:
                         'date': date,
                         'store_id': store,
                         'product_category': category,
-                        'daily_sales': round(daily_sales, 2),
+                        'sales_amount': round(daily_sales, 2),
                         'day_of_week': day_of_week,
                         'month': month,
                         'quarter': (month - 1) // 3 + 1,

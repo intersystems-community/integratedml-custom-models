@@ -34,3 +34,7 @@ def setup_logger(name: str, level: str = "INFO") -> logging.Logger:
     logger.setLevel(getattr(logging, level.upper()))
     
     return logger
+
+# Default module-level logger for convenience
+logger = setup_logger("pluggable_iml")
+__all__ = ["setup_logger", "logger"]

@@ -44,10 +44,11 @@ class TransactionDataGenerator:
     - Configurable fraud rates and complexity
     """
     
-    def __init__(self, 
+    def __init__(self,
                  n_customers: int = 10000,
                  fraud_rate: float = 0.02,
-                 random_state: int = 42):
+                 random_state: int = 42,
+                 **kwargs):
         """
         Initialize the transaction generator.
         
@@ -67,6 +68,17 @@ class TransactionDataGenerator:
         # Set random seeds
         np.random.seed(random_state)
         random.seed(random_state)
+
+        # Backward-compatibility aliases expected by notebooks/tests
+        # - num_customers: alias for n_customers
+        # - num_merchants: accepted for compatibility (not strictly used)
+        if 'num_customers' in kwargs and kwargs['num_customers'] is not None:
+            try:
+                self.n_customers = int(kwargs['num_customers'])
+            except Exception:
+                pass
+        # Accept but do not require usage; keep for interface compatibility
+        self._num_merchants_requested = kwargs.get('num_merchants', None)
         
         # Initialize data structures
         self.customers = {}
