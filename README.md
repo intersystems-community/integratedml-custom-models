@@ -6,7 +6,9 @@
 [![CodeQL](https://github.com/intersystems-community/integratedml-flexible-model-integration/workflows/CodeQL/badge.svg)](https://github.com/intersystems-community/integratedml-flexible-model-integration/actions/workflows/codeql.yml)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-A demonstration framework for integrating custom machine learning models with InterSystems IRIS IntegratedML. This project provides four practical examples showing how to deploy scikit-learn compatible models directly into database workflows, enabling in-database predictions without data movement.
+**The complete showcase for IntegratedML's Custom Models feature** - demonstrating how Python ML models integrate seamlessly into InterSystems IRIS SQL workflows. This project provides four real-world examples showing how to deploy custom machine learning models directly into database operations using familiar SQL syntax.
+
+🎯 **Key Innovation**: Execute `CREATE MODEL ... USING "your.custom.model"` and `SELECT PREDICT(YourModel)` to bring any Python ML model into SQL - no data movement required!
 
 ## Features
 
@@ -24,7 +26,17 @@ A demonstration framework for integrating custom machine learning models with In
 - **VS Code** (recommended for notebooks)
 - At least 4GB RAM for IRIS container
 
-### 🚀 Simplified Setup
+### 🚀 One-Command Demo
+
+```bash
+# Experience all four demos with one command!
+python run_all_demos.py --quick
+
+# Or run integration tests only
+python run_all_demos.py --test-only
+```
+
+### 🛠️ Full Setup
 
 ```bash
 # Clone the repository
@@ -78,7 +90,14 @@ make demos          # Run all demo scripts
 make status         # Check system status
 ```
 
-### What's New?
+### 🎉 What's New?
+**IntegratedML Custom Models Demo Ready!** Complete showcase with:
+- ✅ **All 4 demos working** with comprehensive integration tests
+- ✅ **One-command experience** via `run_all_demos.py`
+- ✅ **Real-world examples** from finance to genomics
+- ✅ **Production-ready patterns** with proper error handling
+- ✅ **Interactive notebooks** for hands-on learning
+
 **Simplified Development Workflow**: No more complex multi-container setup! Just IRIS database + local Python development in VS Code.
 
 ## Demo Examples

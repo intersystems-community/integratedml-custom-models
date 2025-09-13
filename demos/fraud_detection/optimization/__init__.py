@@ -20,17 +20,15 @@ from .model_optimization import ModelOptimizer, PredictionCache
 from .memory_optimization import MemoryOptimizer
 from .latency_optimization import LatencyOptimizer, PerformanceMonitor
 from .batch_optimization import BatchProcessor, StreamProcessor
-from .caching_strategies import FeatureCache, ModelCache, IntelligentCache
+from .caching_strategies import FraudDetectionCacheManager
 
 __all__ = [
     'ModelOptimizer',
-    'PredictionCache', 
+    'PredictionCache',
     'MemoryOptimizer',
     'LatencyOptimizer',
     'PerformanceMonitor',
     'BatchProcessor',
     'StreamProcessor',
-    'FeatureCache',
-    'ModelCache',
-    'IntelligentCache'
+    'FraudDetectionCacheManager'
 ]

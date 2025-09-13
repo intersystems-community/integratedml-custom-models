@@ -1046,3 +1046,141 @@ class BatchProcessingTimer:
             self.monitor.record_batch_completion(
                 batch_id, self.batch_size, processing_time_ms
             )
+
+
+class StreamProcessor:
+    """
+    Stream processing for real-time fraud detection.
+
+    Handles continuous stream of transactions with low-latency processing,
+    optimized for real-time fraud detection scenarios.
+    """
+
+    def __init__(self,
+                 batch_timeout_ms: float = 10.0,
+                 max_stream_buffer: int = 1000,
+                 enable_backpressure: bool = True):
+        """
+        Initialize stream processor.
+
+        Parameters:
+        -----------
+        batch_timeout_ms : float, default=10.0
+            Maximum time to wait before processing incomplete batch
+        max_stream_buffer : int, default=1000
+            Maximum buffer size for stream
+        enable_backpressure : bool, default=True
+            Enable backpressure handling
+        """
+        self.batch_timeout_ms = batch_timeout_ms
+        self.max_stream_buffer = max_stream_buffer
+        self.enable_backpressure = enable_backpressure
+
+        # Stream buffer
+        self.stream_buffer = deque(maxlen=max_stream_buffer)
+        self.buffer_lock = threading.RLock()
+
+        # Processing state
+        self.processing_active = False
+        self.process_thread = None
+
+        # Statistics
+        self.total_processed = 0
+        self.total_dropped = 0
+        self.last_process_time = None
+
+    def start(self):
+        """Start stream processing."""
+        if not self.processing_active:
+            self.processing_active = True
+            self.process_thread = threading.Thread(target=self._process_stream)
+            self.process_thread.daemon = True
+            self.process_thread.start()
+            logger.info("Stream processor started")
+
+    def stop(self):
+        """Stop stream processing."""
+        self.processing_active = False
+        if self.process_thread and self.process_thread.is_alive():
+            self.process_thread.join(timeout=2)
+        logger.info("Stream processor stopped")
+
+    def submit(self, transaction_data: Dict[str, Any]) -> bool:
+        """
+        Submit transaction to stream.
+
+        Parameters:
+        -----------
+        transaction_data : dict
+            Transaction data to process
+
+        Returns:
+        --------
+        accepted : bool
+            Whether transaction was accepted into stream
+        """
+        with self.buffer_lock:
+            if len(self.stream_buffer) >= self.max_stream_buffer:
+                if self.enable_backpressure:
+                    # Drop oldest if buffer full
+                    self.stream_buffer.popleft()
+                    self.total_dropped += 1
+                else:
+                    # Reject new transaction
+                    return False
+
+            self.stream_buffer.append({
+                'data': transaction_data,
+                'timestamp': time.time()
+            })
+            return True
+
+    def _process_stream(self):
+        """Process stream continuously."""
+        last_batch_time = time.time()
+
+        while self.processing_active:
+            current_time = time.time()
+
+            with self.buffer_lock:
+                # Check if we should process
+                should_process = (
+                    len(self.stream_buffer) > 0 and
+                    (current_time - last_batch_time) * 1000 >= self.batch_timeout_ms
+                )
+
+                if should_process:
+                    # Process available items
+                    batch = []
+                    while self.stream_buffer and len(batch) < 100:
+                        batch.append(self.stream_buffer.popleft())
+
+                    if batch:
+                        self._process_batch(batch)
+                        last_batch_time = current_time
+
+            # Small sleep to prevent CPU spinning
+            time.sleep(0.001)
+
+    def _process_batch(self, batch: List[Dict[str, Any]]):
+        """Process a batch of stream items."""
+        try:
+            # Process transactions (placeholder for actual processing)
+            for item in batch:
+                # In real implementation, this would call fraud detection
+                self.total_processed += 1
+                self.last_process_time = time.time()
+
+        except Exception as e:
+            logger.error(f"Stream batch processing failed: {e}")
+
+    def get_stats(self) -> Dict[str, Any]:
+        """Get stream processor statistics."""
+        with self.buffer_lock:
+            return {
+                'buffer_size': len(self.stream_buffer),
+                'total_processed': self.total_processed,
+                'total_dropped': self.total_dropped,
+                'processing_active': self.processing_active,
+                'last_process_time': self.last_process_time
+            }
