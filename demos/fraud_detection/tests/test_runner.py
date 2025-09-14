@@ -18,79 +18,60 @@ sys.path.insert(0, str(project_root))
 def run_unit_tests():
     """Run unit tests only."""
     print("🧪 Running Unit Tests...")
-    return pytest.main([
-        "-v",
-        "-m", "unit",
-        str(Path(__file__).parent),
-        "--tb=short"
-    ])
+    return pytest.main(["-v", "-m", "unit", str(Path(__file__).parent), "--tb=short"])
 
 
 def run_integration_tests():
     """Run integration tests only."""
     print("🔗 Running Integration Tests...")
-    return pytest.main([
-        "-v",
-        "-m", "integration",
-        str(Path(__file__).parent),
-        "--tb=short"
-    ])
+    return pytest.main(
+        ["-v", "-m", "integration", str(Path(__file__).parent), "--tb=short"]
+    )
 
 
 def run_performance_tests():
     """Run performance tests only."""
     print("⚡ Running Performance Tests...")
-    return pytest.main([
-        "-v",
-        "-m", "performance",
-        str(Path(__file__).parent),
-        "--tb=short"
-    ])
+    return pytest.main(
+        ["-v", "-m", "performance", str(Path(__file__).parent), "--tb=short"]
+    )
 
 
 def run_all_tests():
     """Run all tests."""
     print("🚀 Running All Tests...")
-    return pytest.main([
-        "-v",
-        str(Path(__file__).parent),
-        "--tb=short"
-    ])
+    return pytest.main(["-v", str(Path(__file__).parent), "--tb=short"])
 
 
 def run_quick_tests():
     """Run quick tests (excluding slow performance tests)."""
     print("⚡ Running Quick Tests...")
-    return pytest.main([
-        "-v",
-        "-m", "not slow",
-        str(Path(__file__).parent),
-        "--tb=short"
-    ])
+    return pytest.main(
+        ["-v", "-m", "not slow", str(Path(__file__).parent), "--tb=short"]
+    )
 
 
 def run_latency_verification():
     """Run specific latency verification tests."""
     print("🎯 Running Latency Verification Tests...")
-    return pytest.main([
-        "-v",
-        "-k", "latency",
-        str(Path(__file__).parent),
-        "--tb=short"
-    ])
+    return pytest.main(
+        ["-v", "-k", "latency", str(Path(__file__).parent), "--tb=short"]
+    )
 
 
 def run_with_coverage():
     """Run tests with coverage reporting."""
     print("📊 Running Tests with Coverage...")
-    return pytest.main([
-        "-v",
-        "--cov=demos.fraud_detection",
-        "--cov-report=html",
-        "--cov-report=term-missing",
-        str(Path(__file__).parent),
-        "--tb=short"
-    ])
+    return pytest.main(
+        [
+            "-v",
+            "--cov=demos.fraud_detection",
+            "--cov-report=html",
+            "--cov-report=term-missing",
+            str(Path(__file__).parent),
+            "--tb=short",
+        ]
+    )
 
 
 def main():
@@ -98,22 +79,26 @@ def main():
     parser = argparse.ArgumentParser(description="Fraud Detection Test Runner")
     parser.add_argument(
         "test_type",
-        choices=["unit", "integration", "performance", "all", "quick", "latency", "coverage"],
-        help="Type of tests to run"
+        choices=[
+            "unit",
+            "integration",
+            "performance",
+            "all",
+            "quick",
+            "latency",
+            "coverage",
+        ],
+        help="Type of tests to run",
     )
-    parser.add_argument(
-        "--verbose", "-v",
-        action="store_true",
-        help="Verbose output"
-    )
-    
+    parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
+
     args = parser.parse_args()
-    
+
     print("🔍 Fraud Detection Test Suite")
     print("=" * 50)
-    
+
     start_time = time.time()
-    
+
     # Run specified test type
     if args.test_type == "unit":
         exit_code = run_unit_tests()
@@ -132,18 +117,18 @@ def main():
     else:
         print(f"❌ Unknown test type: {args.test_type}")
         return 1
-    
+
     end_time = time.time()
     duration = end_time - start_time
-    
+
     print("=" * 50)
     print(f"⏱️ Test execution completed in {duration:.2f} seconds")
-    
+
     if exit_code == 0:
         print("✅ All tests passed!")
     else:
         print("❌ Some tests failed!")
-    
+
     return exit_code
 
 

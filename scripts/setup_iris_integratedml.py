@@ -12,7 +12,7 @@ import logging
 from typing import Dict, Any
 
 # Add shared modules to path
-sys.path.append('shared')
+sys.path.append("shared")
 
 from database.connection import IRISConnection
 
@@ -20,28 +20,29 @@ from database.connection import IRISConnection
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 def setup_iris_integratedml():
     """Set up IRIS database with IntegratedML models and sample data."""
-    
+
     # Connect to IRIS database (port 1974 based on docker ps output)
     # Try different credential combinations
     credentials = [
-        ('SuperUser', 'SYS'),
-        ('_SYSTEM', 'SYS'),
-        ('demo', 'demo'),
-        ('admin', 'admin')
+        ("SuperUser", "SYS"),
+        ("_SYSTEM", "SYS"),
+        ("demo", "demo"),
+        ("admin", "admin"),
     ]
-    
+
     conn = None
     for username, password in credentials:
         try:
             logger.info(f"Trying credentials: {username}")
             conn = IRISConnection(
-                host='localhost',
+                host="localhost",
                 port=1974,
                 username=username,
                 password=password,
-                namespace='USER'
+                namespace="USER",
             )
             if conn.test_connection():
                 logger.info(f"✅ Connected with credentials: {username}")
@@ -49,38 +50,39 @@ def setup_iris_integratedml():
         except Exception as e:
             logger.warning(f"Failed with {username}: {e}")
             conn = None
-    
+
     if not conn:
         logger.error("Failed to connect with any credentials")
         return False
-    
+
     try:
         # Connection already tested in the loop above
         logger.info("✅ IRIS connection established")
-        
+
         # Create sample tables and data
         setup_sample_data(conn)
-        
-        # Create IntegratedML models  
+
+        # Create IntegratedML models
         setup_integratedml_models(conn)
-        
+
         # Verify setup
         verify_setup(conn)
-        
+
         logger.info("🎉 IRIS IntegratedML setup completed successfully!")
         return True
-        
+
     except Exception as e:
         logger.error(f"Setup failed: {e}")
         return False
     finally:
         conn.close()
 
+
 def setup_sample_data(conn: IRISConnection):
     """Create sample tables and insert data for demonstrations."""
-    
+
     logger.info("Setting up sample data...")
-    
+
     # Credit Risk Sample Data
     credit_risk_table = """
     CREATE TABLE CreditRisk (
@@ -94,7 +96,7 @@ def setup_sample_data(conn: IRISConnection):
         default_risk VARCHAR(10)
     )
     """
-    
+
     credit_risk_data = """
     INSERT INTO CreditRisk VALUES
     (1, 35, 50000.00, 720, 0.35, 8, 25000.00, 'Low'),
@@ -108,7 +110,7 @@ def setup_sample_data(conn: IRISConnection):
     (9, 41, 65000.00, 710, 0.32, 12, 32000.00, 'Low'),
     (10, 29, 38000.00, 640, 0.48, 4, 16000.00, 'Medium')
     """
-    
+
     # Sales Forecasting Sample Data
     sales_table = """
     CREATE TABLE SalesData (
@@ -122,7 +124,7 @@ def setup_sample_data(conn: IRISConnection):
         season VARCHAR(20)
     )
     """
-    
+
     sales_data = """
     INSERT INTO SalesData VALUES
     (1, '2024-01-15', 'Electronics', 'North', 15000.00, 45, 2000.00, 'Winter'),
@@ -136,7 +138,7 @@ def setup_sample_data(conn: IRISConnection):
     (9, '2024-05-20', 'Clothing', 'North', 11000.00, 88, 1600.00, 'Spring'),
     (10, '2024-05-27', 'Home', 'South', 16000.00, 47, 2400.00, 'Spring')
     """
-    
+
     # Fraud Detection Sample Data
     fraud_table = """
     CREATE TABLE TransactionData (
@@ -151,7 +153,7 @@ def setup_sample_data(conn: IRISConnection):
         is_fraud VARCHAR(10)
     )
     """
-    
+
     fraud_data = """
     INSERT INTO TransactionData VALUES
     (1, 1001, 85.50, 'Purchase', 'Grocery', 0.1, 14, 2, 'No'),
@@ -165,36 +167,37 @@ def setup_sample_data(conn: IRISConnection):
     (9, 1009, 65.80, 'Purchase', 'Clothing', 0.1, 15, 4, 'No'),
     (10, 1010, 200.00, 'Transfer', 'Bank', 0.25, 11, 2, 'No')
     """
-    
+
     # Execute table creation and data insertion
     tables_and_data = [
         (credit_risk_table, credit_risk_data, "Credit Risk"),
         (sales_table, sales_data, "Sales Data"),
-        (fraud_table, fraud_data, "Transaction Data")
+        (fraud_table, fraud_data, "Transaction Data"),
     ]
-    
+
     for table_sql, data_sql, name in tables_and_data:
         try:
             # Drop table if exists
             table_name = name.replace(" ", "")
             conn.execute_sql(f"DROP TABLE IF EXISTS {table_name}")
-            
+
             # Create table
             conn.execute_sql(table_sql)
             logger.info(f"✅ Created table: {name}")
-            
+
             # Insert data
             conn.execute_sql(data_sql)
             logger.info(f"✅ Inserted sample data for: {name}")
-            
+
         except Exception as e:
             logger.error(f"Failed to create {name} table: {e}")
 
+
 def setup_integratedml_models(conn: IRISConnection):
     """Create and train IntegratedML models."""
-    
+
     logger.info("Setting up IntegratedML models...")
-    
+
     # Credit Risk Model
     try:
         credit_model_sql = """
@@ -205,15 +208,15 @@ def setup_integratedml_models(conn: IRISConnection):
         """
         conn.execute_sql(credit_model_sql)
         logger.info("✅ Created Credit Risk model")
-        
+
         # Train the model
         conn.execute_sql("TRAIN MODEL CreditRiskModel")
         logger.info("✅ Training started for Credit Risk model")
-        
+
     except Exception as e:
         logger.warning(f"Credit Risk model creation/training: {e}")
-    
-    # Sales Forecasting Model  
+
+    # Sales Forecasting Model
     try:
         sales_model_sql = """
         CREATE MODEL SalesForecastModel
@@ -223,14 +226,14 @@ def setup_integratedml_models(conn: IRISConnection):
         """
         conn.execute_sql(sales_model_sql)
         logger.info("✅ Created Sales Forecast model")
-        
+
         # Train the model
         conn.execute_sql("TRAIN MODEL SalesForecastModel")
         logger.info("✅ Training started for Sales Forecast model")
-        
+
     except Exception as e:
         logger.warning(f"Sales Forecast model creation/training: {e}")
-    
+
     # Fraud Detection Model
     try:
         fraud_model_sql = """
@@ -241,41 +244,44 @@ def setup_integratedml_models(conn: IRISConnection):
         """
         conn.execute_sql(fraud_model_sql)
         logger.info("✅ Created Fraud Detection model")
-        
+
         # Train the model
         conn.execute_sql("TRAIN MODEL FraudDetectionModel")
         logger.info("✅ Training started for Fraud Detection model")
-        
+
     except Exception as e:
         logger.warning(f"Fraud Detection model creation/training: {e}")
 
+
 def verify_setup(conn: IRISConnection):
     """Verify that the setup was successful."""
-    
+
     logger.info("Verifying setup...")
-    
+
     # Check tables
-    tables = ['CreditRisk', 'SalesData', 'TransactionData']
+    tables = ["CreditRisk", "SalesData", "TransactionData"]
     for table in tables:
         try:
             result = conn.execute_sql(f"SELECT COUNT(*) as count FROM {table}")
-            count = result[0]['count'] if result else 0
+            count = result[0]["count"] if result else 0
             logger.info(f"✅ Table {table}: {count} rows")
         except Exception as e:
             logger.error(f"❌ Table {table}: {e}")
-    
+
     # Check models
     try:
-        models = conn.execute_sql("SELECT model_name, trained FROM INFORMATION_SCHEMA.ML_MODELS")
+        models = conn.execute_sql(
+            "SELECT model_name, trained FROM INFORMATION_SCHEMA.ML_MODELS"
+        )
         if models:
             for model in models:
-                status = "Trained" if model.get('trained') else "Created"
+                status = "Trained" if model.get("trained") else "Created"
                 logger.info(f"✅ Model {model['model_name']}: {status}")
         else:
             logger.warning("No models found in INFORMATION_SCHEMA.ML_MODELS")
     except Exception as e:
         logger.warning(f"Could not verify models: {e}")
-    
+
     # Test basic IntegratedML functionality
     try:
         test_query = """
@@ -291,10 +297,11 @@ def verify_setup(conn: IRISConnection):
     except Exception as e:
         logger.error(f"Basic SQL test failed: {e}")
 
+
 if __name__ == "__main__":
     print("🚀 Starting IRIS IntegratedML Setup...")
     success = setup_iris_integratedml()
-    
+
     if success:
         print("\n🎉 Setup completed successfully!")
         print("📊 Dashboard queries should now return data")

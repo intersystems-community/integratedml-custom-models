@@ -23,6 +23,8 @@ services:
       - ./docker/iris-init:/opt/irisapp/init:ro
       - ./docker/iris-config:/opt/irisapp/config:ro
       - ./data:/opt/irisapp/shared/data
+      - ./demos:/opt/irisapp/demos:ro
+      - ./shared:/opt/irisapp/shared:ro
     healthcheck:
       test: ["CMD", "iris", "session", "iris", "-U", "${IRIS_NAMESPACE:-USER}", "##class(%SYSTEM.Process).CurrentDirectory()"]
       interval: 30s

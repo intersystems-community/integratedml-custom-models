@@ -26,6 +26,12 @@ RUN pip3 install --no-cache-dir \
     xgboost \
     lightgbm
 
+# Install IntegratedML AutoML package from InterSystems registry
+RUN python3 -m pip install --index-url https://registry.intersystems.com/pypi/simple \
+    --no-cache-dir \
+    --target /usr/irissys/mgr/python \
+    intersystems-iris-automl
+
 # Install basic AutoML dependencies
 RUN pip3 install --no-cache-dir \
     optuna \
@@ -48,6 +54,18 @@ COPY docker/iris-init/ /opt/irisapp/init/
 
 # Make sure initialization scripts are executable
 RUN chmod +x /opt/irisapp/init/*.sh
+
+# Create directories for custom models
+RUN mkdir -p /opt/iris/mgr/python/custom_models/classifiers \
+    && mkdir -p /opt/iris/mgr/python/custom_models/regressors
+
+# Copy custom Python models from demos
+COPY demos/ /tmp/demos/
+
+# Copy all custom models to the IRIS Python path
+RUN cp -r /tmp/demos/*/models/*.py /opt/iris/mgr/python/custom_models/classifiers/ 2>/dev/null || true \
+    && cp -r /tmp/demos/*/models/*.py /opt/iris/mgr/python/custom_models/regressors/ 2>/dev/null || true \
+    && rm -rf /tmp/demos
 
 USER irisowner
 

@@ -16,7 +16,7 @@ from .models.ensemble import EnsembleModel
 
 __all__ = [
     "IntegratedMLBaseModel",
-    "ClassificationModel", 
+    "ClassificationModel",
     "RegressionModel",
-    "EnsembleModel"
+    "EnsembleModel",
 ]

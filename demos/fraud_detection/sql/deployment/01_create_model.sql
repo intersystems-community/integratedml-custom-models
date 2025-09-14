@@ -140,16 +140,35 @@ FROM TransactionTrainingData;
 -- 3. Create Ensemble Fraud Detection Model
 -- ============================================================================
 
--- Create the main ensemble model using IntegratedML
-CREATE MODEL FraudDetectionEnsemble PREDICTING (is_fraud) FROM TransactionFeatures;
+-- Create the main ensemble model using custom EnsembleFraudDetector
+CREATE MODEL FraudDetectionEnsemble
+PREDICTING (is_fraud)
+FROM TransactionFeatures
+USING {
+    "path_to_classifiers": "/opt/iris/mgr/python/custom_models/classifiers",
+    "model_name": "EnsembleFraudDetector",
+    "isc_models_disabled": 1,
+    "user_params": {
+        "enable_neural": 1,
+        "enable_rules": 1,
+        "enable_anomaly": 1,
+        "enable_behavioral": 1,
+        "neural_weight": 0.4,
+        "rules_weight": 0.2,
+        "anomaly_weight": 0.2,
+        "behavioral_weight": 0.2,
+        "decision_threshold": 0.5,
+        "high_risk_threshold": 0.8
+    }
+};
 
 -- ============================================================================
 -- 4. Create Sub-Models for Ensemble Components
 -- ============================================================================
 
--- Rule-based model for business rules
+-- Rule-based model for business rules (used internally by ensemble)
 CREATE MODEL RuleBasedFraudDetector PREDICTING (is_fraud) FROM (
-    SELECT 
+    SELECT
         transaction_id,
         high_amount_flag,
         unusual_time_flag,
@@ -159,11 +178,11 @@ CREATE MODEL RuleBasedFraudDetector PREDICTING (is_fraud) FROM (
         late_night_transaction,
         is_fraud
     FROM TransactionTrainingData
-) USING {"seed": 42, "provider": "H2O"};
+);
 
--- Anomaly detection model
+-- Anomaly detection model (used internally by ensemble)
 CREATE MODEL AnomalyFraudDetector PREDICTING (is_fraud) FROM (
-    SELECT 
+    SELECT
         transaction_id,
         amount,
         distance_from_home,
@@ -172,11 +191,11 @@ CREATE MODEL AnomalyFraudDetector PREDICTING (is_fraud) FROM (
         frequency_score,
         is_fraud
     FROM TransactionFeatures
-) USING {"seed": 42, "provider": "H2O"};
+);
 
--- Behavioral analysis model
+-- Behavioral analysis model (used internally by ensemble)
 CREATE MODEL BehavioralFraudDetector PREDICTING (is_fraud) FROM (
-    SELECT 
+    SELECT
         transaction_id,
         transactions_last_hour,
         transactions_last_day,
@@ -187,11 +206,10 @@ CREATE MODEL BehavioralFraudDetector PREDICTING (is_fraud) FROM (
         unusual_location_flag,
         is_fraud
     FROM TransactionFeatures
-) USING {"seed": 42, "provider": "H2O"};
+);
 
--- Neural network model for complex patterns
-CREATE MODEL NeuralFraudDetector PREDICTING (is_fraud) FROM TransactionFeatures 
-USING {"seed": 42, "provider": "H2O", "algorithm": "DeepLearning"};
+-- Neural network model for complex patterns (used internally by ensemble)
+CREATE MODEL NeuralFraudDetector PREDICTING (is_fraud) FROM TransactionFeatures;
 
 -- ============================================================================
 -- 5. Create Real-time Prediction Functions
@@ -361,16 +379,34 @@ BEGIN
     RAISE NOTICE 'Starting model retraining for data from % to %', 
                  p_training_start_date, p_training_end_date;
     
-    -- Retrain ensemble model
+    -- Retrain ensemble model with custom EnsembleFraudDetector
     DROP MODEL IF EXISTS FraudDetectionEnsemble_New;
-    CREATE MODEL FraudDetectionEnsemble_New PREDICTING (is_fraud) 
+    CREATE MODEL FraudDetectionEnsemble_New
+    PREDICTING (is_fraud)
     FROM TransactionFeatures
+    USING {
+        "path_to_classifiers": "/opt/iris/mgr/python/custom_models/classifiers",
+        "model_name": "EnsembleFraudDetector",
+        "isc_models_disabled": 1,
+        "user_params": {
+            "enable_neural": 1,
+            "enable_rules": 1,
+            "enable_anomaly": 1,
+            "enable_behavioral": 1,
+            "neural_weight": 0.4,
+            "rules_weight": 0.2,
+            "anomaly_weight": 0.2,
+            "behavioral_weight": 0.2,
+            "decision_threshold": 0.5,
+            "high_risk_threshold": 0.8
+        }
+    }
     WHERE DATE(transaction_timestamp) BETWEEN p_training_start_date AND p_training_end_date;
     
-    -- Retrain sub-models
+    -- Retrain sub-models (used internally by ensemble)
     DROP MODEL IF EXISTS RuleBasedFraudDetector_New;
     CREATE MODEL RuleBasedFraudDetector_New PREDICTING (is_fraud) FROM (
-        SELECT 
+        SELECT
             transaction_id,
             high_amount_flag,
             unusual_time_flag,
@@ -381,7 +417,7 @@ BEGIN
             is_fraud
         FROM TransactionTrainingData
         WHERE DATE(transaction_timestamp) BETWEEN p_training_start_date AND p_training_end_date
-    ) USING {"seed": 42, "provider": "H2O"};
+    );
     
     -- Validate new models before deployment
     -- (Additional validation logic would go here)

@@ -9,6 +9,7 @@ import irispython
 import sys
 import time
 
+
 def setup_iris_connection():
     """Connect to IRIS database"""
     try:
@@ -19,18 +20,19 @@ def setup_iris_connection():
         print(f"❌ Failed to connect to IRIS: {e}")
         sys.exit(1)
 
+
 def execute_sql_script(connection, script_content):
     """Execute SQL script and handle IRIS-specific syntax"""
     cursor = connection.cursor()
-    
+
     # Split script into individual statements
-    statements = script_content.split(';')
-    
+    statements = script_content.split(";")
+
     for i, statement in enumerate(statements):
         statement = statement.strip()
-        if not statement or statement.startswith('--'):
+        if not statement or statement.startswith("--"):
             continue
-            
+
         try:
             print(f"Executing statement {i+1}: {statement[:50]}...")
             cursor.execute(statement)
@@ -39,14 +41,15 @@ def execute_sql_script(connection, script_content):
             print(f"⚠️  Statement {i+1} failed: {e}")
             # Continue with next statement
             continue
-    
+
     cursor.close()
+
 
 def setup_complete_integratedml():
     """Set up complete IntegratedML demo environment"""
-    
+
     connection = setup_iris_connection()
-    
+
     # SQL Script with all tables, data, and models
     sql_script = """
 -- Drop existing tables if they exist
@@ -103,14 +106,14 @@ CREATE TABLE DNASequences (
     organism VARCHAR(100)
 );
 """
-    
+
     print("🔧 Setting up tables...")
     execute_sql_script(connection, sql_script)
-    
+
     # Populate data using individual INSERT statements for IRIS compatibility
     print("📊 Populating sample data...")
     cursor = connection.cursor()
-    
+
     # Credit Risk Data
     print("Inserting Credit Risk data...")
     for i in range(1, 101):
@@ -122,12 +125,18 @@ CREATE TABLE DNASequences (
             cursor.execute(sql)
         except Exception as e:
             print(f"Error inserting credit risk record {i}: {e}")
-    
+
     # Fraud Detection Data
     print("Inserting Fraud Detection data...")
-    merchant_categories = ['Grocery', 'Gas Station', 'Restaurant', 'Online Shopping', 'ATM']
-    card_types = ['Visa', 'MasterCard', 'Amex']
-    
+    merchant_categories = [
+        "Grocery",
+        "Gas Station",
+        "Restaurant",
+        "Online Shopping",
+        "ATM",
+    ]
+    card_types = ["Visa", "MasterCard", "Amex"]
+
     for i in range(1, 101):
         sql = f"""
         INSERT INTO Transactions (transaction_id, transaction_amount, merchant_category, card_type, is_fraud, fraud_probability)
@@ -137,12 +146,12 @@ CREATE TABLE DNASequences (
             cursor.execute(sql)
         except Exception as e:
             print(f"Error inserting fraud detection record {i}: {e}")
-    
+
     # Sales Data
     print("Inserting Sales Forecasting data...")
-    product_categories = ['Electronics', 'Clothing', 'Home & Garden', 'Books']
-    regions = ['North', 'South', 'West']
-    
+    product_categories = ["Electronics", "Clothing", "Home & Garden", "Books"]
+    regions = ["North", "South", "West"]
+
     for i in range(1, 101):
         sql = f"""
         INSERT INTO SalesData (date_period, product_category, region, actual_sales, predicted_sales, seasonality_factor)
@@ -152,15 +161,21 @@ CREATE TABLE DNASequences (
             cursor.execute(sql)
         except Exception as e:
             print(f"Error inserting sales record {i}: {e}")
-    
+
     # DNA Data
     print("Inserting DNA Similarity data...")
-    classifications = ['Oncogene', 'Tumor Suppressor', 'Housekeeping', 'Regulatory', 'Structural']
-    gene_families = ['Kinase', 'Transcription Factor', 'Receptor']
-    organisms = ['Homo sapiens', 'Mus musculus', 'Drosophila', 'C. elegans']
-    
+    classifications = [
+        "Oncogene",
+        "Tumor Suppressor",
+        "Housekeeping",
+        "Regulatory",
+        "Structural",
+    ]
+    gene_families = ["Kinase", "Transcription Factor", "Receptor"]
+    organisms = ["Homo sapiens", "Mus musculus", "Drosophila", "C. elegans"]
+
     for i in range(1, 101):
-        dna_sequence = 'ATCGATCG' + ('CGTA' * (i % 10)) + 'TTAAGGCC'
+        dna_sequence = "ATCGATCG" + ("CGTA" * (i % 10)) + "TTAAGGCC"
         sql = f"""
         INSERT INTO DNASequences (sequence_id, dna_sequence, classification, similarity_score, gene_family, organism)
         VALUES ('DNA{i:06d}', '{dna_sequence}', '{classifications[i % 5]}', {0.5 + (i % 50) / 100.0}, '{gene_families[i % 3]}', '{organisms[i % 4]}')
@@ -169,23 +184,24 @@ CREATE TABLE DNASequences (
             cursor.execute(sql)
         except Exception as e:
             print(f"Error inserting DNA record {i}: {e}")
-    
+
     cursor.close()
     print("✅ Sample data inserted successfully")
-    
+
     # Verify data was inserted
     cursor = connection.cursor()
-    tables = ['CreditApplications', 'Transactions', 'SalesData', 'DNASequences']
+    tables = ["CreditApplications", "Transactions", "SalesData", "DNASequences"]
     for table in tables:
         cursor.execute(f"SELECT COUNT(*) FROM {table}")
         count = cursor.fetchone()[0]
         print(f"📊 {table}: {count} records")
     cursor.close()
-    
+
     print("🎯 IntegratedML setup completed successfully!")
     print("🚀 Dashboard queries should now work with PREDICT() functions")
-    
+
     connection.close()
+
 
 if __name__ == "__main__":
     setup_complete_integratedml()

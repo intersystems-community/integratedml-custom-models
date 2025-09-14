@@ -22,12 +22,14 @@ class SimpleDNAClassifier(ClassificationModel):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.vectorizer = CountVectorizer(analyzer='char', ngram_range=(3, 3))
+        self.vectorizer = CountVectorizer(analyzer="char", ngram_range=(3, 3))
         self.classifier = MultinomialNB()
 
     def _preprocess_sequences(self, sequences):
         """Convert DNA sequences to k-mer features."""
-        return [' '.join(seq[i:i+3] for i in range(len(seq)-2)) for seq in sequences]
+        return [
+            " ".join(seq[i : i + 3] for i in range(len(seq) - 2)) for seq in sequences
+        ]
 
     def fit(self, X, y):
         """Fit the DNA classifier."""
@@ -73,7 +75,7 @@ class TestDNASimilarityIntegration:
             "GCTAGCTAGCTA",
             "GCTAGCTAGCTG",
             "AAAAAAAAAAAAA",
-            "TTTTTTTTTTTT"
+            "TTTTTTTTTTTT",
         ]
 
         # Create labels (similarity groups)
@@ -89,7 +91,7 @@ class TestDNASimilarityIntegration:
         test_sequences = [
             "ATCGATCGATCG",  # Should be similar to group 0
             "GCTAGCTAGCTA",  # Should be similar to group 1
-            "AAAAAAAAAAAAA"  # Should be similar to group 2
+            "AAAAAAAAAAAAA",  # Should be similar to group 2
         ]
 
         predictions = analyzer.predict(test_sequences)
@@ -116,7 +118,7 @@ class TestDNASimilarityIntegration:
         # These should work even without training for basic similarity
         try:
             # Test if the analyzer has similarity methods
-            if hasattr(analyzer, 'calculate_similarity'):
+            if hasattr(analyzer, "calculate_similarity"):
                 sim_close = analyzer.calculate_similarity(seq1, seq2)
                 sim_distant = analyzer.calculate_similarity(seq1, seq3)
 
@@ -137,7 +139,11 @@ class TestDNASimilarityIntegration:
         analyzer = SimpleDNAClassifier()
 
         valid_sequences = ["ATCG", "GCTA", "AAAA"]
-        invalid_sequences = ["ATCX", "123", "atcg"]  # Invalid characters, numbers, lowercase
+        invalid_sequences = [
+            "ATCX",
+            "123",
+            "atcg",
+        ]  # Invalid characters, numbers, lowercase
 
         try:
             # Test with valid sequences

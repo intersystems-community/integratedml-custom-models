@@ -106,32 +106,50 @@ CREATE TABLE NewCreditApplications (
 -- Main credit risk model with full feature engineering
 CREATE MODEL CreditRiskModel PREDICTING (default_risk)
 FROM CreditApplications
-USING "demos.credit_risk.models.credit_risk_classifier.CustomCreditRiskClassifier"(
-    enable_debt_ratio=1,
-    enable_interaction_terms=1,
-    enable_risk_scoring=1,
-    decision_threshold=0.6
-);
+USING {
+    "path_to_classifiers": "/opt/iris/mgr/python/custom_models/classifiers",
+    "path_to_regressors": "/opt/iris/mgr/python/custom_models/regressors",
+    "model_name": "CustomCreditRiskClassifier",
+    "isc_models_disabled": 1,
+    "user_params": {
+        "enable_debt_ratio": 1,
+        "enable_interaction_terms": 1,
+        "enable_risk_scoring": 1,
+        "decision_threshold": 0.6
+    }
+};
 
 -- Conservative model with stricter threshold for high-stakes decisions
 CREATE MODEL ConservativeCreditModel PREDICTING (default_risk)
 FROM CreditApplications
-USING "demos.credit_risk.models.credit_risk_classifier.CustomCreditRiskClassifier"(
-    enable_debt_ratio=1,
-    enable_interaction_terms=0,
-    enable_risk_scoring=1,
-    decision_threshold=0.4  -- Lower threshold = more conservative
-);
+USING {
+    "path_to_classifiers": "/opt/iris/mgr/python/custom_models/classifiers",
+    "path_to_regressors": "/opt/iris/mgr/python/custom_models/regressors",
+    "model_name": "CustomCreditRiskClassifier",
+    "isc_models_disabled": 1,
+    "user_params": {
+        "enable_debt_ratio": 1,
+        "enable_interaction_terms": 0,
+        "enable_risk_scoring": 1,
+        "decision_threshold": 0.4
+    }
+};
 
 -- Lightweight model without interaction terms for faster scoring
 CREATE MODEL FastCreditModel PREDICTING (default_risk)
 FROM CreditApplications
-USING "demos.credit_risk.models.credit_risk_classifier.CustomCreditRiskClassifier"(
-    enable_debt_ratio=1,
-    enable_interaction_terms=0,
-    enable_risk_scoring=0,
-    decision_threshold=0.5
-);
+USING {
+    "path_to_classifiers": "/opt/iris/mgr/python/custom_models/classifiers",
+    "path_to_regressors": "/opt/iris/mgr/python/custom_models/regressors",
+    "model_name": "CustomCreditRiskClassifier",
+    "isc_models_disabled": 1,
+    "user_params": {
+        "enable_debt_ratio": 1,
+        "enable_interaction_terms": 0,
+        "enable_risk_scoring": 0,
+        "decision_threshold": 0.5
+    }
+};
 
 -- ========================================================================
 -- Step 4: Train the models

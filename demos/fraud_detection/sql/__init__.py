@@ -20,17 +20,17 @@ __author__ = "IntegratedML Pluggable Models Team"
 # SQL script categories
 SQL_CATEGORIES = [
     "deployment",
-    "prediction", 
+    "prediction",
     "monitoring",
     "optimization",
-    "maintenance"
+    "maintenance",
 ]
 
 # Model types supported
 SUPPORTED_MODEL_TYPES = [
     "ensemble_fraud_detector",
-    "rule_based_detector", 
+    "rule_based_detector",
     "anomaly_detector",
     "neural_detector",
-    "behavioral_detector"
+    "behavioral_detector",
 ]

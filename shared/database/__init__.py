@@ -11,11 +11,11 @@ from .model_manager import ModelManager
 from .data_loader import DataLoader
 
 __all__ = [
-    'IRISConnection',
-    'get_connection',
-    'test_connection',
-    'setup_database',
-    'initialize_schemas',
-    'ModelManager',
-    'DataLoader'
+    "IRISConnection",
+    "get_connection",
+    "test_connection",
+    "setup_database",
+    "initialize_schemas",
+    "ModelManager",
+    "DataLoader",
 ]

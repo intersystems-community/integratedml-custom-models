@@ -14,9 +14,9 @@ __author__ = "IntegratedML Team"
 
 # Test configuration
 TEST_CONFIG = {
-    'max_latency_ms': 100,
-    'min_accuracy': 0.85,
-    'test_data_size': 1000,
-    'performance_iterations': 100,
-    'tolerance': 0.05
+    "max_latency_ms": 100,
+    "min_accuracy": 0.85,
+    "test_data_size": 1000,
+    "performance_iterations": 100,
+    "tolerance": 0.05,
 }

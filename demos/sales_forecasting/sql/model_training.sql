@@ -13,12 +13,11 @@
 CREATE OR REPLACE MODEL SalesForecast.HybridForecasting
 PREDICTING (SalesAmount)
 FROM SalesForecast.ForecastingView
-WITH (
-    "type": "regression",
-    "provider": "Python",
-    "python_class": "demos.sales_forecasting.models.hybrid_forecasting_model.HybridForecastingModel",
-    "python_module": "hybrid_forecasting_model",
-    "model_config": '{
+USING {
+    "path_to_regressors": "/opt/iris/mgr/python/custom_models/regressors",
+    "model_name": "HybridForecastingModel",
+    "isc_models_disabled": 1,
+    "user_params": {
         "prophet_config": {
             "seasonality_mode": "multiplicative",
             "yearly_seasonality": true,
@@ -59,8 +58,8 @@ WITH (
             "weather_features": true,
             "economic_features": true
         }
-    }'
-);
+    }
+};
 
 -- =============================================================================
 -- Training Data Preparation
