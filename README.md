@@ -1,14 +1,14 @@
-# 🚀 IntegratedML Custom Models
+# IntegratedML Custom Models
 
-> **Bring Your Python ML Models Directly into SQL** - The future of in-database machine learning with InterSystems IRIS 2025.2
+> Deploy custom Python ML models directly within SQL queries using InterSystems IRIS 2025.2
 
 [![IRIS 2025.2](https://img.shields.io/badge/IRIS-2025.2-blue.svg)](https://www.intersystems.com)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-## 🌟 Overview
+## Overview
 
-IntegratedML Custom Models revolutionizes machine learning workflows by enabling data scientists to deploy custom Python models directly within SQL queries. No more data movement, no more ETL pipelines - just pure ML power right where your data lives.
+IntegratedML Custom Models allows you to deploy custom Python models directly within SQL queries. This feature enables in-database machine learning without data movement, making it easier to integrate ML models into existing database workflows.
 
 ```sql
 -- Train your custom Python model with a single SQL command
@@ -30,45 +30,45 @@ SELECT customer_id,
 FROM NewApplications
 ```
 
-## 🎯 Key Features
+## Key Features
 
-- **🔌 Seamless Integration**: Deploy any scikit-learn compatible model directly in SQL
-- **⚡ Real-time Predictions**: Sub-50ms latency for mission-critical applications
-- **🎨 Custom Models**: Bring your own Python models with domain-specific logic
-- **📊 No Data Movement**: Train and predict on live data without exports
-- **🔧 Production Ready**: Built for enterprise scale and reliability
+- **SQL Integration**: Deploy scikit-learn compatible models directly in SQL
+- **Low Latency**: Sub-50ms prediction latency for real-time applications
+- **Custom Models**: Use your own Python models with domain-specific logic
+- **In-Database Processing**: Train and predict without data exports
+- **Scalable**: Designed for production workloads
 
-## 📦 Demo Showcase
+## Demo Applications
 
-### 1. 💳 Credit Risk Assessment
-Advanced financial risk modeling with custom feature engineering for loan default prediction.
+### 1. Credit Risk Assessment
+Financial risk modeling with custom feature engineering for loan default prediction.
 
-- **Model**: Custom ensemble classifier with financial domain expertise
-- **Performance**: 100% accuracy on 10,000+ records
+- **Model**: Custom ensemble classifier
+- **Test Data**: 10,000 records
 - **Training Time**: ~2.3 seconds
 
-### 2. 🚨 Fraud Detection
-Real-time transaction fraud detection using ensemble methods combining neural networks, rules, and anomaly detection.
+### 2. Fraud Detection
+Transaction fraud detection using ensemble methods.
 
 - **Model**: Multi-model ensemble (Neural + Rules + Anomaly)
-- **Scale**: Processes 25,000+ transactions
+- **Test Data**: 25,000 transactions
 - **Latency**: <50ms per prediction
 
-### 3. 📈 Sales Forecasting
-Hybrid time-series forecasting combining Facebook Prophet with LightGBM for retail sales prediction.
+### 3. Sales Forecasting
+Time-series forecasting combining Prophet with LightGBM.
 
 - **Model**: Prophet + LightGBM hybrid
-- **Accuracy**: 26.9% MAPE on yearly data
-- **Features**: Seasonality, holidays, promotions
+- **Accuracy**: 26.9% MAPE
+- **Features**: Seasonality, holidays
 
-### 4. 🧬 DNA Similarity Analysis
-Genomic sequence analysis using custom similarity algorithms for pathogenicity prediction.
+### 4. DNA Similarity Analysis
+Sequence analysis using custom similarity algorithms.
 
-- **Model**: K-NN with custom DNA distance metrics
-- **Scale**: 5,000+ sequences
-- **Features**: GC content, motif search, sequence alignment
+- **Model**: K-NN with custom distance metrics
+- **Test Data**: 5,000 sequences
+- **Features**: GC content, motif search
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -106,14 +106,11 @@ make demo-sales
 make demo-dna
 ```
 
-## 📚 Documentation
+## Documentation
 
 - [Quick Start Guide](docs/QUICK_GUIDE_CUSTOM_MODELS.md)
-- [Architecture Overview](docs/architecture.md)
-- [API Reference](docs/api_reference.md)
-- [Custom Model Development](docs/custom_model_guide.md)
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -133,7 +130,7 @@ make demo-dna
 └─────────────────────────────────────────────────────────────┘
 ```
 
-## 🧪 Testing
+## Testing
 
 ```bash
 # Run all tests
@@ -156,7 +153,7 @@ pytest demos/fraud_detection/tests/ -v
 | Sales Forecasting | 365 days × 5 stores | 0.4s | 26.9% MAPE |
 | DNA Similarity | 5,000 sequences | 1.7s | 50.5% accuracy |
 
-## 🛠️ Development
+## Development
 
 ### Project Structure
 
@@ -206,7 +203,7 @@ USING {
 }
 ```
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
@@ -216,25 +213,13 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
+## Support
 
-- InterSystems IRIS team for the IntegratedML platform
-- The scikit-learn community for the amazing ML ecosystem
-- All contributors who made this project possible
+For support with IntegratedML Custom Models:
 
-## 📞 Support
-
-- 📧 Email: support@intersystems.com
-- 💬 Community: [InterSystems Developer Community](https://community.intersystems.com)
-- 🐛 Issues: [GitHub Issues](https://github.com/intersystems/integratedml-custom-models/issues)
-
----
-
-<p align="center">
-  <b>Built with ❤️ by the InterSystems Team</b><br>
-  <i>Empowering data scientists to bring ML directly to their data</i>
-</p>
+- [InterSystems Developer Community](https://community.intersystems.com)
+- [InterSystems Support](https://www.intersystems.com/support/)
