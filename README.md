@@ -6,6 +6,23 @@
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Key Features](#key-features)
+- [Demo Applications](#demo-applications)
+- [Quick Start](#quick-start)
+- [Documentation](#documentation)
+  - [Core Documentation](#-core-documentation-docs)
+  - [Demo Applications](#-demo-applications-demos)
+  - [Feature Specifications](#-feature-specifications-specs)
+- [Architecture](#architecture)
+- [Testing](#testing)
+- [Development](#development)
+- [Contributing](#contributing)
+- [License](#license)
+- [Support](#support)
+
 ## Overview
 
 IntegratedML Custom Models allows you to deploy custom Python models directly within SQL queries. This feature enables in-database machine learning without data movement, making it easier to integrate ML models into existing database workflows.
@@ -108,7 +125,28 @@ make demo-dna
 
 ## Documentation
 
-- [Quick Start Guide](docs/QUICK_GUIDE_CUSTOM_MODELS.md)
+This project's documentation is organized into three main areas:
+
+### 📚 Core Documentation ([`docs/`](docs/))
+Cross-cutting technical documentation for the entire project:
+- **[Quick Start Guide](docs/QUICK_GUIDE_CUSTOM_MODELS.md)** - Get started in under 5 minutes
+- **[Architecture](docs/architecture.md)** - System design, base class hierarchy, integration patterns
+- **[API Reference](docs/api_reference.md)** - Complete API documentation for all model classes
+- **[Deployment](docs/deployment.md)** - Production deployment strategies and configuration
+- **[User Guide](docs/user_guide.md)** - Step-by-step usage instructions
+
+### 🎯 Demo Applications ([`demos/`](demos/))
+Working examples with demo-specific setup instructions:
+- **[Credit Risk](demos/credit_risk/)** - Financial risk modeling with custom feature engineering
+- **[Fraud Detection](demos/fraud_detection/)** - Transaction fraud detection using ensemble methods
+- **[Sales Forecasting](demos/sales_forecasting/)** - Time-series forecasting with Prophet + LightGBM
+- **[DNA Similarity](demos/dna_similarity/)** - Sequence analysis with custom distance metrics
+
+### 📋 Feature Specifications ([`specs/`](specs/))
+Design documents and implementation plans for new features:
+- Feature specifications with user stories and acceptance criteria
+- Implementation plans with architecture decisions
+- Task breakdowns and validation results
 
 ## Architecture
 

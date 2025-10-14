@@ -1,5 +1,18 @@
 # API Reference
 
+## Table of Contents
+
+- [Complete IntegratedML API Documentation](#complete-integratedml-api-documentation)
+- [Core Base Classes](#core-base-classes)
+- [Classification Models](#classification-models)
+- [Regression Models](#regression-models)
+- [Ensemble Models](#ensemble-models)
+- [Demo-Specific Models](#demo-specific-models)
+- [Configuration Reference](#configuration-reference)
+- [Utility Functions](#utility-functions)
+- [Error Handling](#error-handling)
+- [Best Practices](#best-practices)
+
 ## 📚 Complete IntegratedML API Documentation
 
 This comprehensive API reference documents all classes, methods, and configuration options available in the IntegratedML Flexible Model Integration Demo. Each section includes detailed parameter descriptions, return values, usage examples, and best practices.
