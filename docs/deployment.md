@@ -8,22 +8,13 @@ This comprehensive guide covers deploying IntegratedML Flexible Model Integratio
 
 ## 📋 Table of Contents
 
-1. [Deployment Architecture Overview](#deployment-architecture-overview)
-2. [Environment Setup](#environment-setup)
-3. [Database Configuration](#database-configuration)
-4. [Model Deployment Strategies](#model-deployment-strategies)
-5. [Container Deployment](#container-deployment)
-6. [Cloud Deployment](#cloud-deployment)
-7. [Performance Optimization](#performance-optimization)
-
-### Database Initialization
-Database initialization is handled by the scripts in `docker/iris-init/`. The primary script is [`01_setup_integratedml.sql`](../docker/iris-init/01_setup_integratedml.sql), which sets up the necessary schemas and tables. Additional scripts (`02_*`, `03_*`, `04_*`, `99_*`) populate the database with demo data and models.
-8. [Security Configuration](#security-configuration)
-9. [Monitoring and Logging](#monitoring-and-logging)
-10. [CI/CD Integration](#cicd-integration)
-11. [Scaling Strategies](#scaling-strategies)
-12. [Backup and Recovery](#backup-and-recovery)
-13. [Troubleshooting](#troubleshooting)
+- [Deployment Architecture Overview](#deployment-architecture-overview)
+- [Environment Setup](#environment-setup)
+- [Database Configuration](#database-configuration)
+- [Model Deployment Strategies](#model-deployment-strategies)
+- [Container Deployment](#container-deployment)
+- [Cloud Deployment](#cloud-deployment)
+- [Performance Optimization](#performance-optimization)
 
 ---
 

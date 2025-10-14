@@ -1,5 +1,20 @@
 # Technical Architecture Guide
 
+## Table of Contents
+
+- [System Overview](#-system-overview)
+- [Core Architecture Principles](#-core-architecture-principles)
+- [Base Class Hierarchy](#-base-class-hierarchy)
+- [Integration Patterns](#-integration-patterns)
+- [Data Flow Architecture](#-data-flow-architecture)
+- [Component Architecture](#-component-architecture)
+- [Design Patterns](#-design-patterns)
+- [Security & Compliance Architecture](#-security--compliance-architecture)
+- [Performance Architecture](#-performance-architecture)
+- [Testing Architecture](#-testing-architecture)
+- [Deployment Architecture](#-deployment-architecture)
+- [Monitoring & Observability](#-monitoring--observability)
+
 ## 🏗️ System Overview
 
 The IntegratedML Flexible Model Integration Demo showcases a sophisticated architecture that bridges enterprise database capabilities with modern machine learning workflows. This guide provides a comprehensive technical deep-dive into the system design, base classes, integration patterns, and architectural decisions.
@@ -65,6 +80,57 @@ High-level modules (business logic) depend on abstractions (base classes), not c
 ---
 
 ## 🏛️ Base Class Hierarchy
+
+### Class Hierarchy Diagram
+
+```
+                    ┌─────────────────────────────────┐
+                    │     BaseEstimator (sklearn)     │
+                    │      + ClassifierMixin          │
+                    │      + RegressorMixin           │
+                    └────────────────┬────────────────┘
+                                     │
+                    ┌────────────────▼────────────────┐
+                    │   IntegratedMLBaseModel (ABC)   │
+                    │                                 │
+                    │  Core Interface:                │
+                    │  • fit(X, y)                    │
+                    │  • predict(X)                   │
+                    │  • save_model() / load_model()  │
+                    │  • _validate_parameters()       │
+                    │  • _validate_input()            │
+                    └─────────┬───────────────────────┘
+                              │
+            ┌─────────────────┼─────────────────┐
+            │                 │                 │
+  ┌─────────▼─────────┐ ┌────▼──────────┐ ┌───▼──────────┐
+  │ ClassificationModel│ │RegressionModel│ │EnsembleModel │
+  │  + ClassifierMixin │ │ + RegressorMixin│ │             │
+  │                    │ │                │ │             │
+  │ Additional:        │ │ Additional:    │ │ Additional: │
+  │ • predict_proba()  │ │ • predict_with │ │ • add_comp  │
+  │ • predict_log_     │ │   _interval()  │ │ • set_voting│
+  │   proba()          │ │ • get_residuals│ │   _weights()│
+  │ • decision_        │ │ • score()      │ │ • get_comp  │
+  │   function()       │ │                │ │   _predict  │
+  └─────────┬──────────┘ └────┬───────────┘ └───┬─────────┘
+            │                 │                  │
+            │                 │                  │
+   ┌────────▼─────────┐ ┌────▼──────────┐ ┌────▼──────────┐
+   │ Credit Risk      │ │ Sales         │ │ Fraud         │
+   │ Classifier       │ │ Forecasting   │ │ Detection     │
+   │ (demo 1)         │ │ (demo 3)      │ │ Ensemble      │
+   │                  │ │               │ │ (demo 2)      │
+   └──────────────────┘ └───────────────┘ └───────────────┘
+
+Demo-Specific Models:
+• CustomCreditRiskClassifier   → Credit risk with feature engineering
+• HybridForecastingModel        → Prophet + LightGBM combination
+• EnsembleFraudDetector        → Multi-model ensemble (Neural + Rules + Anomaly)
+• DNASequenceClassifier        → K-NN with custom distance metrics
+```
+
+**Inheritance Flow**: Each layer adds specialized functionality while inheriting core capabilities from parent classes. Demo models implement domain-specific logic (custom feature engineering, ensemble strategies, third-party library integration) while maintaining IntegratedML compatibility.
 
 ### IntegratedMLBaseModel
 
