@@ -5,20 +5,20 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "integratedml-demos"
 version = "1.0.0"
-description = "Comprehensive demo portfolio showcasing IntegratedML's flexible model integration capability"
+description = "Comprehensive demo portfolio showcasing IntegratedML Custom Models capability"
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
     {name = "InterSystems Corporation", email = "support@intersystems.com"},
 ]
 keywords = [
-    "integratedml", 
-    "machine learning", 
-    "database", 
-    "sql", 
+    "integratedml",
+    "machine learning",
+    "database",
+    "sql",
     "scikit-learn",
     "ensemble models",
-    "flexible model integration",
+    "custom models",
     "intersystems"
 ]
 classifiers = [

@@ -25,7 +25,7 @@
 
 ## Overview
 
-IntegratedML Custom Models allows you to deploy custom Python models directly within SQL queries. This feature enables in-database machine learning without data movement, making it easier to integrate ML models into existing database workflows.
+**IntegratedML Custom Models** extends InterSystems IRIS IntegratedML with a powerful new capability: deploy your own Python models directly within SQL queries. While IntegratedML has provided automated ML for years, this feature gives data scientists full control—custom preprocessing, any scikit-learn compatible model, and third-party libraries like Prophet or LightGBM—all executing in-database without data movement.
 
 ```sql
 -- Train your custom Python model with a single SQL command
