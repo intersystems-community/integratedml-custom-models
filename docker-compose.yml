@@ -1,4 +1,4 @@
-# IntegratedML Flexible Model Integration - Simplified Docker Setup
+# IntegratedML Custom Models - Simplified Docker Setup
 # IRIS database only - users run notebooks in VS Code locally
 
 version: '3.8'

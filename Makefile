@@ -1,11 +1,11 @@
-# IntegratedML Flexible Model Integration - Development Automation
+# IntegratedML Custom Models - Development Automation
 # Simplified workflow for IRIS + local development
 
 .PHONY: help setup start stop clean install test format lint notebooks
 
 # Default target
 help:
-	@echo "IntegratedML Flexible Model Integration - Available Commands:"
+	@echo "IntegratedML Custom Models - Available Commands:"
 	@echo ""
 	@echo "Setup & Environment:"
 	@echo "  setup     - Complete project setup (dependencies + IRIS)"

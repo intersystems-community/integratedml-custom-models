@@ -5,6 +5,32 @@
 [![IRIS 2025.2](https://img.shields.io/badge/IRIS-2025.2-blue.svg)](https://www.intersystems.com)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![EAP Status](https://img.shields.io/badge/status-Early%20Access%20Program-orange.svg)](docs/EAP_GUIDE.md)
+
+---
+
+## 🚀 Early Access Program (EAP)
+
+**Welcome EAP Participants!** You're among a select group of 5 participants helping shape this feature before the IRIS 2026.1 GA release.
+
+### Getting Started with EAP
+1. **[Read the EAP Guide](docs/EAP_GUIDE.md)** - Understand the program, timeline, and expectations
+2. **[Install Custom Models](docs/INSTALLATION.md)** - Complete installation in <30 minutes (target)
+3. **[Check Known Issues](docs/EAP_KNOWN_ISSUES.md)** - Review current limitations before reporting bugs
+4. **[Review Roadmap](docs/EAP_ROADMAP.md)** - See what's coming from EAP to GA
+
+### How to Provide Feedback
+Your feedback directly shapes the final product! Choose your preferred channel:
+
+- **Survey** (recommended): Survey links provided by Data Platforms Product Team
+- **Email**: [thomas.dyar@intersystems.com](mailto:thomas.dyar@intersystems.com)
+- **GitHub Issues** (if enabled): Technical bugs and feature requests
+
+**Response time**: 1-2 business days during EAP
+
+For questions or support, see [EAP FAQ](docs/EAP_FAQ.md) or email thomas.dyar@intersystems.com.
+
+---
 
 ## Table of Contents
 
@@ -25,7 +51,7 @@
 
 ## Overview
 
-IntegratedML Custom Models allows you to deploy custom Python models directly within SQL queries. This feature enables in-database machine learning without data movement, making it easier to integrate ML models into existing database workflows.
+**IntegratedML Custom Models** extends InterSystems IRIS IntegratedML with a powerful new capability: deploy your own Python models directly within SQL queries. While IntegratedML has provided automated ML for years, this feature gives data scientists full control—custom preprocessing, any scikit-learn compatible model, and third-party libraries like Prophet or LightGBM—all executing in-database without data movement.
 
 ```sql
 -- Train your custom Python model with a single SQL command
@@ -127,13 +153,22 @@ make demo-dna
 
 This project's documentation is organized into three main areas:
 
+### 🔶 EAP Documentation (Start Here!)
+Essential guides for Early Access Program participants:
+- **[EAP Guide](docs/EAP_GUIDE.md)** - Program overview, timeline, feedback channels
+- **[Installation Guide](docs/INSTALLATION.md)** - Platform-specific setup (macOS primary, Linux/Windows secondary)
+- **[Known Issues](docs/EAP_KNOWN_ISSUES.md)** - Current limitations and workarounds
+- **[EAP Roadmap](docs/EAP_ROADMAP.md)** - Features from EAP to GA (2026.1)
+- **[EAP FAQ](docs/EAP_FAQ.md)** - Frequently asked questions
+- **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
+
 ### 📚 Core Documentation ([`docs/`](docs/))
 Cross-cutting technical documentation for the entire project:
 - **[Quick Start Guide](docs/QUICK_GUIDE_CUSTOM_MODELS.md)** - Get started in under 5 minutes
+- **[User Guide](docs/user_guide.md)** - Step-by-step usage instructions
 - **[Architecture](docs/architecture.md)** - System design, base class hierarchy, integration patterns
 - **[API Reference](docs/api_reference.md)** - Complete API documentation for all model classes
 - **[Deployment](docs/deployment.md)** - Production deployment strategies and configuration
-- **[User Guide](docs/user_guide.md)** - Step-by-step usage instructions
 
 ### 🎯 Demo Applications ([`demos/`](demos/))
 Working examples with demo-specific setup instructions:
