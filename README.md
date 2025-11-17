@@ -11,7 +11,9 @@
 
 ## 🚀 Early Access Program (EAP)
 
-**Welcome EAP Participants!** You're among a select group of 5 participants helping shape this feature before the IRIS 2026.1 GA release.
+**Welcome EAP Participants!** The _IntegratedML Custom Models_ will be General Availability (GA)
+for the InterSystems IRIS 2026.1 release. Until then, this repository will be the source of documentation
+and information about the feature.
 
 ### Getting Started with EAP
 1. **[Read the EAP Guide](docs/EAP_GUIDE.md)** - Understand the program, timeline, and expectations
