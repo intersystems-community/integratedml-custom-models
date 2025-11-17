@@ -2,7 +2,7 @@
 
 **Program Status**: Early Access Program (EAP)
 **Target GA Release**: IRIS 2026.1
-**Last Updated**: 2025-01-12
+**Last Updated**: 2025-11-17
 
 ---
 
@@ -44,16 +44,21 @@ A: An Early Access Program (EAP) gives select users exclusive access to new feat
 - ✅ Credit in GA release (if desired)
 
 **Responsibilities**:
-- ⏰ ~5-10 hours time commitment
+- ⏰ ~10-15 hours time commitment over 8-12 weeks
 - 📊 Provide structured feedback
 - 🤝 Respect confidentiality until GA
 
 ---
 
-**Q: Why was I selected for the EAP?**
+**Q: How do I join the EAP?**
 
-A: You were selected because you have relevant ML/data science experience with IRIS or expressed interest in advanced IntegratedML capabilities. We're looking for participants who can:
+A: This is an **open Early Access Program**. Anyone with relevant ML/data science experience with IRIS can join:
 
+1. **Sign up**: Visit https://evaluation.intersystems.com and register for the IntegratedML Custom Models EAP
+2. **Review the repository**: https://github.com/intersystems-community/integratedml-custom-models
+3. **Get started**: Follow the installation guide and start exploring
+
+We're looking for participants who can:
 - Evaluate Custom Models for real-world use cases
 - Provide technical feedback on usability
 - Test documentation clarity
@@ -61,14 +66,14 @@ A: You were selected because you have relevant ML/data science experience with I
 
 ---
 
-**Q: How many participants are in the EAP?**
+**Q: What should I expect during the EAP?**
 
-A: 5 participants in this initial EAP cohort. This small group allows for:
+A: As an open EAP participant, you can expect:
 
-- Personalized support and attention
-- Direct communication with product team
-- Manageable feedback volume for rapid iteration
-- Higher quality feedback per participant
+- **Email interaction**: The InterSystems Product team will engage with you via email throughout the program
+- **User survey**: We'll ask you to complete at least one survey at the end of the EAP to share your experience and feedback
+- **Direct communication**: Support and feedback channels with the product team
+- **Your feedback matters**: Your input directly shapes the final product before GA release
 
 ---
 
@@ -553,12 +558,12 @@ A: Please don't! **Check first**:
 
 **Q: How long will the EAP run?**
 
-A: **Approximately 6-8 weeks** from EAP launch to GA preparation.
+A: **Approximately 8-12 weeks** from EAP launch to GA preparation.
 
 **Timeline**:
-- **Week 1-2**: Onboarding, installation, initial exploration
-- **Week 3-6**: Use case evaluation, custom model development
-- **Week 7-8**: Final feedback, GA preparation
+- **Week 1-3**: Onboarding, installation, initial exploration
+- **Week 4-10**: Use case evaluation, custom model development
+- **Week 11-12**: Final feedback, GA preparation
 
 **Exact timeline** will be communicated via email.
 
@@ -569,7 +574,7 @@ A: **Approximately 6-8 weeks** from EAP launch to GA preparation.
 A: **Target**: IRIS 2026.1 (Q2 2026)
 
 **Milestones**:
-- EAP Launch: January 2025
+- EAP Launch: November 2025
 - Feature Freeze: ~2 months before GA
 - GA Release: Q2 2026
 
@@ -790,8 +795,8 @@ A: **We're exploring community contribution options**:
 
 ---
 
-**Document Version**: 1.0
-**Last Updated**: 2025-01-12
+**Document Version**: 1.1
+**Last Updated**: 2025-11-17
 **Next Update**: Based on EAP questions
 
 **Latest Version**: https://github.com/intersystems-community/integratedml-custom-models
