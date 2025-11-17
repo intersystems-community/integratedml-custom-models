@@ -231,6 +231,7 @@ docs/*_report*.md
 docs/*_benchmark*.md
 docs/VALIDATION*.md
 docs/*audit*.md
+eap/COMMUNITY_ANNOUNCEMENT.md
 notebooks/
 .ipynb_checkpoints/
 .venv/
