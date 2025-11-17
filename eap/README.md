@@ -1,18 +1,18 @@
-# IntegratedML Custom Models - Early Access Program
+IntegratedML Custom Models - Early Access Program
 
 Deploy custom Python ML models directly within SQL queries using InterSystems IRIS.
 
-## What This Feature Does
+WHAT THIS FEATURE DOES
 
 IntegratedML Custom Models extends the existing IntegratedML/AutoML capability by allowing you to deploy your own custom Python models directly within SQL. While IntegratedML AutoML provides automated machine learning, Custom Models gives you full control over model training, preprocessing, and predictions - all while keeping the same SQL interface.
 
 Use this when you need:
-• Custom preprocessing or feature engineering
-• Domain-specific algorithms
-• Third-party libraries (Prophet, LightGBM, XGBoost)
-• Full control over model training logic
+- Custom preprocessing or feature engineering
+- Domain-specific algorithms
+- Third-party libraries (Prophet, LightGBM, XGBoost)
+- Full control over model training logic
 
-## Requirements
+REQUIREMENTS
 
 IRIS Version: 2025.2 or later (Community Edition or licensed)
 
@@ -24,7 +24,7 @@ Python: 3.8 or later (3.11+ recommended)
 
 Platform: macOS (primary support), Linux or Windows (secondary support)
 
-## Getting Started
+GETTING STARTED
 
 Repository: https://github.com/intersystems-community/integratedml-custom-models
 
@@ -36,27 +36,27 @@ Repository: https://github.com/intersystems-community/integratedml-custom-models
 
 Target installation time: Under 30 minutes
 
-## What's Included
+WHAT'S INCLUDED
 
 The repository includes:
-• 4 complete demo applications (Credit Risk, Fraud Detection, Sales Forecasting, DNA Similarity)
-• Comprehensive documentation (installation, troubleshooting, API reference)
-• Base model classes for classification, regression, and ensemble models
-• Docker setup for quick evaluation
+- 4 complete demo applications (Credit Risk, Fraud Detection, Sales Forecasting, DNA Similarity)
+- Comprehensive documentation (installation, troubleshooting, API reference)
+- Base model classes for classification, regression, and ensemble models
+- Docker setup for quick evaluation
 
-## EAP Program Details
+EAP PROGRAM DETAILS
 
 Duration: Approximately 6-8 weeks
 Participants: 5 selected users
 Target GA Release: IRIS 2026.1 (Q2 2026)
 
 Your feedback will directly shape the final product. We're looking for feedback on:
-• Installation experience
-• Documentation clarity
-• Feature completeness
-• Production readiness considerations
+- Installation experience
+- Documentation clarity
+- Feature completeness
+- Production readiness considerations
 
-## How to Provide Feedback
+HOW TO PROVIDE FEEDBACK
 
 Survey (recommended): Survey links will be provided by the Data Platforms Product Team
 
@@ -64,23 +64,23 @@ Email: thomas.dyar@intersystems.com (response time: 1-2 business days)
 
 GitHub Issues (if enabled): Technical bugs and feature requests
 
-## Support During EAP
+SUPPORT DURING EAP
 
 For questions or issues:
-• Check the Troubleshooting Guide: https://github.com/intersystems-community/integratedml-custom-models/blob/main/docs/TROUBLESHOOTING.md
-• Check the FAQ: https://github.com/intersystems-community/integratedml-custom-models/blob/main/docs/EAP_FAQ.md
-• Email: thomas.dyar@intersystems.com
+- Check the Troubleshooting Guide: https://github.com/intersystems-community/integratedml-custom-models/blob/main/docs/TROUBLESHOOTING.md
+- Check the FAQ: https://github.com/intersystems-community/integratedml-custom-models/blob/main/docs/EAP_FAQ.md
+- Email: thomas.dyar@intersystems.com
 
 Target: Less than 1 support request per participant for installation
 
-## Important Notes
+IMPORTANT NOTES
 
-• This is pre-release software for evaluation only - not for production use during EAP
-• API may change based on feedback
-• Full production support will be available in IRIS 2026.1 GA release
-• Documentation and examples are continuously updated based on participant feedback
+- This is pre-release software for evaluation only - not for production use during EAP
+- API may change based on feedback
+- Full production support will be available in IRIS 2026.1 GA release
+- Documentation and examples are continuously updated based on participant feedback
 
-## Example Usage
+EXAMPLE USAGE
 
 After installation, you can create and use custom models with standard SQL commands:
 
@@ -94,7 +94,7 @@ TRAIN MODEL CreditRiskModel
 SELECT customer_id, PREDICT(CreditRiskModel) as risk_score
 FROM NewApplications
 
-## Complete Documentation
+COMPLETE DOCUMENTATION
 
 All documentation is available in the GitHub repository:
 https://github.com/intersystems-community/integratedml-custom-models
