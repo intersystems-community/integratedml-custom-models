@@ -286,54 +286,40 @@ class TimeSeriesFeatureEngineer:
         features : DataFrame
             All generated features
         """
-        features = pd.DataFrame(index=data.index)
+        feature_parts = [
+            self._create_date_features(data[self.date_col]),
+            self._create_lag_features(data[self.target_col]),
+            self._create_rolling_features(data[self.target_col]),
+            self._create_trend_features(data[self.target_col], data[self.date_col]),
+            self._create_seasonal_features(data[self.date_col]),
+        ]
 
-        # Date-based features
-        date_features = self._create_date_features(data[self.date_col])
-        features = pd.concat([features, date_features], axis=1)
-
-        # Lag features
-        lag_features = self._create_lag_features(data[self.target_col])
-        features = pd.concat([features, lag_features], axis=1)
-
-        # Rolling statistics
-        rolling_features = self._create_rolling_features(data[self.target_col])
-        features = pd.concat([features, rolling_features], axis=1)
-
-        # Trend features
-        trend_features = self._create_trend_features(
-            data[self.target_col], data[self.date_col]
-        )
-        features = pd.concat([features, trend_features], axis=1)
-
-        # Seasonal features
-        seasonal_features = self._create_seasonal_features(data[self.date_col])
-        features = pd.concat([features, seasonal_features], axis=1)
-
-        # Holiday features
         if self.include_holidays:
-            holiday_features = self._create_holiday_features(data[self.date_col])
-            features = pd.concat([features, holiday_features], axis=1)
+            feature_parts.append(self._create_holiday_features(data[self.date_col]))
 
-        # Change point features
-        change_features = self._create_change_point_features(data[self.target_col])
-        features = pd.concat([features, change_features], axis=1)
+        feature_parts.extend(
+            [
+                self._create_change_point_features(data[self.target_col]),
+                self._create_external_features(data),
+            ]
+        )
 
-        # External regressor features
-        external_features = self._create_external_features(data)
-        features = pd.concat([features, external_features], axis=1)
-
-        # Interaction features
-        interaction_features = self._create_interaction_features(features)
-        features = pd.concat([features, interaction_features], axis=1)
+        features = pd.concat(feature_parts, axis=1)
+        features = pd.concat(
+            [features, self._create_interaction_features(features)], axis=1
+        )
 
         if self.target_col in data.columns:
             features["target"] = data[self.target_col].values
 
-        reserved = {self.target_col, self.date_col, "target"}
-        for col in data.columns:
-            if col not in reserved and col not in features.columns:
-                features[col] = data[col].values
+        passthrough_cols = [
+            col
+            for col in data.columns
+            if col not in {self.target_col, self.date_col, "target"}
+            and col not in features.columns
+        ]
+        for col in passthrough_cols:
+            features[col] = data[col].values
 
         return features
 
@@ -411,10 +397,11 @@ class TimeSeriesFeatureEngineer:
         features = pd.DataFrame(index=target.index)
 
         for lag in self.lag_features:
-            features[f"sales_lag_{lag}"] = target.shift(lag)
+            lagged = target.shift(lag)
+            features[f"sales_lag_{lag}"] = lagged
 
             if lag > 1:
-                features[f"lag_diff_{lag}"] = target.shift(lag) - target.shift(lag + 1)
+                features[f"lag_diff_{lag}"] = lagged - target.shift(lag + 1)
 
         return features
 
@@ -422,23 +409,28 @@ class TimeSeriesFeatureEngineer:
         features = pd.DataFrame(index=target.index)
 
         for window in self.rolling_windows:
-            features[f"sales_ma_{window}"] = target.rolling(window=window, min_periods=window).mean()
-            features[f"sales_std_{window}"] = target.rolling(window=window, min_periods=window).std()
-            features[f"rolling_min_{window}"] = target.rolling(window=window, min_periods=1).min()
-            features[f"rolling_max_{window}"] = target.rolling(window=window, min_periods=1).max()
+            strict_window = target.rolling(window=window, min_periods=window)
+            relaxed_window = target.rolling(window=window, min_periods=1)
+            features[f"sales_ma_{window}"] = strict_window.mean()
+            features[f"sales_std_{window}"] = strict_window.std()
+            features[f"rolling_min_{window}"] = relaxed_window.min()
+            features[f"rolling_max_{window}"] = relaxed_window.max()
 
         return features
 
     def _create_trend_features(
         self, target: pd.Series, dates: pd.Series = None
     ) -> pd.DataFrame:
-        features = pd.DataFrame(index=target.index)
-        features["trend_linear"] = np.arange(len(target))
-        features["sales_pct_change"] = target.pct_change()
-        return features
+        return pd.DataFrame(
+            {
+                "trend_linear": np.arange(len(target)),
+                "sales_pct_change": target.pct_change(),
+            },
+            index=target.index,
+        )
 
     def _create_seasonal_features(self, target_or_dates) -> pd.DataFrame:
-        if isinstance(target_or_dates, pd.Series) and not hasattr(target_or_dates, 'dt'):
+        if isinstance(target_or_dates, pd.Series) and not hasattr(target_or_dates, "dt"):
             dates = pd.Series(target_or_dates.index, index=target_or_dates.index)
         else:
             dates = target_or_dates
@@ -568,28 +560,29 @@ class TimeSeriesFeatureEngineer:
         """Create interaction features between important variables."""
         interaction_features = pd.DataFrame(index=features.index)
 
-        # Select key features for interactions
         key_patterns = ["sales_lag_", "sales_ma_", "trend_linear", "is_weekend", "is_month_"]
-        key_features = []
+        key_features = list(
+            dict.fromkeys(
+                matching_cols[0]
+                for pattern in key_patterns
+                for matching_cols in [[col for col in features.columns if pattern in col]]
+                if matching_cols
+            )
+        )
 
-        for pattern in key_patterns:
-            matching_cols = [col for col in features.columns if pattern in col]
-            key_features.extend(matching_cols[:1])
-
-        # Create interactions between key features
         for i, feat1 in enumerate(key_features):
             for feat2 in key_features[i + 1 :]:
-                if feat1 in features.columns and feat2 in features.columns:
-                    # Multiplicative interaction
-                    if features[feat1].dtype in [np.float64, np.int64] and features[
-                        feat2
-                    ].dtype in [np.float64, np.int64]:
+                if not (
+                    pd.api.types.is_numeric_dtype(features[feat1])
+                    and pd.api.types.is_numeric_dtype(features[feat2])
+                ):
+                    continue
 
-                        interaction_name = f"interact_{feat1}_{feat2}"
-                        if len(interaction_name) < 50:  # Avoid very long names
-                            interaction_features[interaction_name] = (
-                                features[feat1] * features[feat2]
-                            )
+                interaction_name = f"interact_{feat1}_{feat2}"
+                if len(interaction_name) < 50:
+                    interaction_features[interaction_name] = (
+                        features[feat1] * features[feat2]
+                    )
 
         return interaction_features
 

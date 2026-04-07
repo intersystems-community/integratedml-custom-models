@@ -1,4 +1,3 @@
-import numpy as np
 from sklearn.ensemble import RandomForestClassifier, VotingClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.neural_network import MLPClassifier
@@ -30,8 +29,7 @@ class IRISModel:
         return self
 
     def predict(self, X):
-        proba = self.predict_proba(X)
-        return (proba[:, 1] >= 0.5).astype(int)
+        return (self.model.predict_proba(X)[:, 1] >= 0.5).astype(int)
 
     def predict_proba(self, X):
         return self.model.predict_proba(X)

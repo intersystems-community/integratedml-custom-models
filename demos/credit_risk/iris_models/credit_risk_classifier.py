@@ -1,4 +1,3 @@
-import numpy as np
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
@@ -26,8 +25,7 @@ class IRISModel:
         return self
 
     def predict(self, X):
-        return self.predict_proba(X)[:, 1]
+        return self.model.predict_proba(X)[:, 1]
 
     def predict_proba(self, X):
         return self.model.predict_proba(X)
-
