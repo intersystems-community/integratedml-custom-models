@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 from typing import Any, Dict, Optional
 
-from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
@@ -20,14 +19,9 @@ class _NumericPreprocessor:
 
     def transform(self, X):
         if isinstance(X, pd.DataFrame):
-            available = [c for c in self._numeric_cols if c in X.columns]
-            X = X[available]
+            X = X[[c for c in self._numeric_cols if c in X.columns]]
         X_arr = X.values if isinstance(X, pd.DataFrame) else np.asarray(X)
         return self._pipeline.transform(X_arr)
-
-    @property
-    def shape(self):
-        return None
 
 
 def calculate_debt_to_income_ratio(debt: float, income: float) -> float:
@@ -122,21 +116,19 @@ class CustomCreditRiskClassifier(ClassificationModel):
     def _add_debt_ratio_features(self, X: pd.DataFrame) -> pd.DataFrame:
         X = X.copy()
         if "credit_amount" in X.columns and "employment_duration" in X.columns:
-            X["debt_to_income_ratio"] = X.apply(
-                lambda r: calculate_debt_to_income_ratio(
-                    r["credit_amount"], max(r["employment_duration"] * 1000, 1)
-                ),
-                axis=1,
-            )
+            X["debt_to_income_ratio"] = [
+                calculate_debt_to_income_ratio(debt, max(employment * 1000, 1))
+                for debt, employment in zip(
+                    X["credit_amount"], X["employment_duration"]
+                )
+            ]
         if "credit_amount" in X.columns and "duration" in X.columns:
-            X["monthly_payment_ratio"] = X.apply(
-                lambda r: calculate_financial_capacity_score(
-                    r["credit_amount"], r["duration"]
-                ),
-                axis=1,
-            )
+            X["monthly_payment_ratio"] = [
+                calculate_financial_capacity_score(loan, duration)
+                for loan, duration in zip(X["credit_amount"], X["duration"])
+            ]
         if "age" in X.columns and "credit_amount" in X.columns:
-            X["age_adjusted_credit"] = X["credit_amount"] / (X["age"].clip(lower=1))
+            X["age_adjusted_credit"] = X["credit_amount"] / X["age"].clip(lower=1)
         return X
 
     def _add_interaction_terms(self, X: pd.DataFrame) -> pd.DataFrame:
@@ -155,12 +147,10 @@ class CustomCreditRiskClassifier(ClassificationModel):
         age_col = "age" if "age" in X.columns else None
 
         if emp_col and age_col:
-            X["stability_score"] = X.apply(
-                lambda r: assess_credit_stability(
-                    r[emp_col] * 12, (r[age_col] - 18) * 12
-                ),
-                axis=1,
-            )
+            X["stability_score"] = [
+                assess_credit_stability(employment * 12, (age - 18) * 12)
+                for employment, age in zip(X[emp_col], X[age_col])
+            ]
             X["composite_risk_score"] = X["stability_score"].clip(0, 1)
         return X
 
@@ -230,29 +220,28 @@ class CustomCreditRiskClassifier(ClassificationModel):
 
     def _select_numeric(self, X: Any) -> Any:
         if isinstance(X, pd.DataFrame) and self._numeric_feature_cols is not None:
-            available = [c for c in self._numeric_feature_cols if c in X.columns]
-            return X[available]
+            return X[[c for c in self._numeric_feature_cols if c in X.columns]]
         return X
 
+    def _to_model_input(self, X: Any) -> np.ndarray:
+        X_eng = self._select_numeric(X)
+        return X_eng.values if isinstance(X_eng, pd.DataFrame) else np.asarray(X_eng)
+
     def _predict_impl(self, X: Any) -> np.ndarray:
-        X = self._select_numeric(X)
-        X_arr = X.values if isinstance(X, pd.DataFrame) else np.asarray(X)
-        proba = self._pipeline.predict_proba(X_arr)[:, 1]
+        proba = self._pipeline.predict_proba(self._to_model_input(X))[:, 1]
         return (proba >= self.decision_threshold).astype(int)
 
     def predict_proba(self, X: Any) -> np.ndarray:
         self._require_trained()
-        X_eng = self._engineer_features(X, is_training=False)
-        X_eng = self._select_numeric(X_eng)
-        X_arr = X_eng.values if isinstance(X_eng, pd.DataFrame) else np.asarray(X_eng)
-        return self._pipeline.predict_proba(X_arr)
+        return self._pipeline.predict_proba(
+            self._to_model_input(self._engineer_features(X, is_training=False))
+        )
 
     def decision_function(self, X: Any) -> np.ndarray:
         self._require_trained()
-        X_eng = self._engineer_features(X, is_training=False)
-        X_eng = self._select_numeric(X_eng)
-        X_arr = X_eng.values if isinstance(X_eng, pd.DataFrame) else np.asarray(X_eng)
-        return self._pipeline.decision_function(X_arr)
+        return self._pipeline.decision_function(
+            self._to_model_input(self._engineer_features(X, is_training=False))
+        )
 
     def get_feature_importance(self) -> Optional[np.ndarray]:
         if not self._is_trained:

@@ -1,10 +1,7 @@
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Optional
+from typing import Optional
 from datetime import datetime, timedelta
-import logging
-
-logger = logging.getLogger(__name__)
 
 MERCHANT_CATEGORIES = [
     "grocery",
@@ -91,10 +88,8 @@ class TransactionDataGenerator:
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
     ) -> pd.DataFrame:
-        if start_date is None:
-            start_date = datetime(2024, 1, 1)
-        if end_date is None:
-            end_date = datetime(2024, 3, 31)
+        start_date = start_date or datetime(2024, 1, 1)
+        end_date = end_date or datetime(2024, 3, 31)
 
         if end_date < start_date:
             raise ValueError("end_date must be >= start_date")
@@ -118,7 +113,6 @@ class TransactionDataGenerator:
             )
 
         n_fraud = max(0, int(num_transactions * self.fraud_rate))
-        n_legit = num_transactions - n_fraud
 
         total_seconds = max(1, int((end_date - start_date).total_seconds()))
         offsets = np.random.randint(0, total_seconds, size=num_transactions)
@@ -147,10 +141,7 @@ class TransactionDataGenerator:
 
         fraud_type = np.full(num_transactions, None, dtype=object)
         if n_fraud > 0:
-            fraud_labels = np.random.choice(FRAUD_TYPES, size=n_fraud)
-            fraud_positions = np.where(is_fraud)[0]
-            for pos, label in zip(fraud_positions, fraud_labels):
-                fraud_type[pos] = label
+            fraud_type[np.where(is_fraud)[0]] = np.random.choice(FRAUD_TYPES, size=n_fraud)
 
         hours = np.array([t.hour for t in timestamps], dtype=np.int64)
         days = np.array([t.weekday() for t in timestamps], dtype=np.int64)
@@ -174,9 +165,9 @@ class TransactionDataGenerator:
             }
         )
 
-        return df.reset_index(drop=True)
+        return df
 
     def generate_transactions(self, n_transactions=None, num_transactions=None, **kwargs):
-        if n_transactions is not None and num_transactions is None:
+        if num_transactions is None:
             num_transactions = n_transactions
         return self.generate_transaction_data(num_transactions=num_transactions, **kwargs)
