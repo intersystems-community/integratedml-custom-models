@@ -265,6 +265,8 @@ class TestPerformanceRequirements:
         self, feature_processor, sample_single_transaction
     ):
         """Test cache effectiveness on performance."""
+        feature_processor.fit(pd.DataFrame([sample_single_transaction]))
+
         # Test without cache
         feature_processor._enable_caching = False
 
@@ -273,8 +275,8 @@ class TestPerformanceRequirements:
             timer = PerformanceTimer()
             timer.start()
 
-            features = feature_processor.process_transaction(
-                sample_single_transaction, historical_data=pd.DataFrame()
+            features = feature_processor.transform_single(
+                sample_single_transaction
             )
 
             timer.stop()
@@ -284,8 +286,8 @@ class TestPerformanceRequirements:
         feature_processor._enable_caching = True
 
         # Prime the cache
-        feature_processor.process_transaction(
-            sample_single_transaction, historical_data=pd.DataFrame()
+        feature_processor.transform_single(
+            sample_single_transaction
         )
 
         cached_times = []
@@ -293,8 +295,8 @@ class TestPerformanceRequirements:
             timer = PerformanceTimer()
             timer.start()
 
-            features = feature_processor.process_transaction(
-                sample_single_transaction, historical_data=pd.DataFrame()
+            features = feature_processor.transform_single(
+                sample_single_transaction
             )
 
             timer.stop()

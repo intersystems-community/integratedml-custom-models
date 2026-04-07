@@ -255,8 +255,8 @@ class TestFeatureEngineer(unittest.TestCase):
 
         # Check rolling mean calculation
         self.assertTrue(
-            pd.isna(rolling_features["sales_ma_7"].iloc[6])
-        )  # First 6 should be NaN
+            pd.isna(rolling_features["sales_ma_7"].iloc[5])
+        )
 
         # Manually calculate 7-day MA for verification
         expected_ma = self.sales_series.iloc[:7].mean()

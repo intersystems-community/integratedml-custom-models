@@ -529,9 +529,49 @@ class SalesDataGenerator:
             Sales data and external factors dataframes
         """
         sales_data = self.generate_sales_data()
+        if "daily_sales" not in sales_data.columns and "sales_amount" in sales_data.columns:
+            sales_data["daily_sales"] = sales_data["sales_amount"]
         external_factors = self._create_external_factors_dataset()
 
         return sales_data, external_factors
+
+    def _generate_date_range(self) -> pd.DatetimeIndex:
+        return pd.date_range(start=self.start_date, end=self.end_date, freq="D")
+
+    def _generate_base_sales_pattern(self, dates: pd.DatetimeIndex) -> pd.Series:
+        n = len(dates)
+        base_level = np.mean(self.base_sales_range)
+        trend = np.linspace(base_level * 0.9, base_level * 1.1, n)
+        noise = np.random.normal(0, base_level * self.noise_level, n)
+        return pd.Series(np.maximum(trend + noise, 0.01), index=dates)
+
+    def _apply_weekly_seasonality(self, series: pd.Series) -> pd.Series:
+        weekly_factors = np.array([0.9, 0.85, 1.0, 1.05, 1.15, 1.3, 1.2])
+        factors = pd.Series([weekly_factors[d] for d in series.index.dayofweek], index=series.index)
+        return series * factors
+
+    def _apply_monthly_seasonality(self, series: pd.Series) -> pd.Series:
+        monthly_factors = np.array([0.9, 0.85, 0.95, 1.0, 1.05, 1.1, 1.15, 1.1, 1.0, 0.95, 1.05, 1.3])
+        factors = pd.Series([monthly_factors[m - 1] for m in series.index.month], index=series.index)
+        return series * factors
+
+    def _generate_external_factors(self) -> pd.DataFrame:
+        dates = self._generate_date_range()
+        n = len(dates)
+        temperature = 15 + 10 * np.sin(2 * np.pi * np.arange(n) / 365) + np.random.normal(0, 2, n)
+        precipitation = np.abs(np.random.normal(2, 3, n))
+        holiday_indicator = np.zeros(n, dtype=int)
+        if not self.holidays.empty and "date" in self.holidays.columns:
+            holiday_dates = set(self.holidays["date"].dt.date)
+            for i, d in enumerate(dates):
+                if d.date() in holiday_dates:
+                    holiday_indicator[i] = 1
+        return pd.DataFrame({
+            "date": dates,
+            "temperature": np.round(temperature, 1),
+            "precipitation": np.round(precipitation, 2),
+            "holiday_indicator": holiday_indicator,
+        })
 
     def _get_holiday_factor(self, date: pd.Timestamp) -> float:
         """Get holiday impact factor for a specific date."""
@@ -743,19 +783,16 @@ class SalesDataGenerator:
         ]
         external_data = external_data.merge(weather_subset, on="date", how="left")
 
-        # Add promotion indicators
-        promo_summary = (
-            self.promotions.groupby("date")
-            .agg({"discount_rate": "mean", "promotion_type": "count"})
-            .rename(columns={"promotion_type": "active_promotions"})
-            .reset_index()
-        )
-
-        external_data = external_data.merge(promo_summary, on="date", how="left")
-        external_data["discount_rate"] = external_data["discount_rate"].fillna(0)
-        external_data["active_promotions"] = external_data["active_promotions"].fillna(
-            0
-        )
+        if not self.promotions.empty and "date" in self.promotions.columns:
+            promo_summary = (
+                self.promotions.groupby("date")
+                .agg({"discount_rate": "mean", "promotion_type": "count"})
+                .rename(columns={"promotion_type": "active_promotions"})
+                .reset_index()
+            )
+            external_data = external_data.merge(promo_summary, on="date", how="left")
+        external_data["discount_rate"] = external_data["discount_rate"].fillna(0) if "discount_rate" in external_data.columns else 0
+        external_data["active_promotions"] = external_data["active_promotions"].fillna(0) if "active_promotions" in external_data.columns else 0
 
         return external_data
 

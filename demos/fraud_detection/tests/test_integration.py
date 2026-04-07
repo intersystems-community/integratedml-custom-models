@@ -103,13 +103,11 @@ class TestEndToEndWorkflow:
         """Test real-time transaction processing workflow."""
         print("\n⚡ Testing Real-time Transaction Processing...")
 
-        # Initialize components
+        # Train ensemble with small dataset for testing
+        train_data = transaction_generator.generate_transactions(n_transactions=100)
         feature_processor = RealTimeFeatureProcessor(enable_caching=True)
         feature_processor.fit(train_data)
         ensemble_detector = EnsembleFraudDetector()
-
-        # Train ensemble with small dataset for testing
-        train_data = transaction_generator.generate_transactions(n_transactions=100)
         X_train = pd.DataFrame(
             [
                 feature_processor.transform_single(row.to_dict())
@@ -233,6 +231,7 @@ class TestEndToEndWorkflow:
         # Train the model for remaining tests
         print("   🧪 Training model for remaining tests...")
         train_data = transaction_generator.generate_transactions(n_transactions=50)
+        feature_processor.fit(train_data)
         X_train = pd.DataFrame(
             [
                 feature_processor.transform_single(row.to_dict())
@@ -260,7 +259,7 @@ class TestEndToEndWorkflow:
 
         try:
             features = feature_processor.transform_single(
-                invalid_transaction, historical_data=pd.DataFrame()
+                invalid_transaction
             )
             # Should handle gracefully and return default features
             assert isinstance(features, dict)
@@ -316,7 +315,7 @@ class TestEndToEndWorkflow:
         for _ in range(5):
             # Process features
             features = feature_processor.transform_single(
-                test_transaction, historical_data=pd.DataFrame()
+                test_transaction
             )
             features_list.append(features)
 
@@ -348,13 +347,11 @@ class TestEndToEndWorkflow:
         """Test system scalability with increasing load."""
         print("\n📈 Testing Scalability Integration...")
 
-        # Initialize system
+        # Train with small dataset
+        train_data = transaction_generator.generate_transactions(n_transactions=50)
         feature_processor = RealTimeFeatureProcessor(enable_caching=True)
         feature_processor.fit(train_data)
         ensemble_detector = EnsembleFraudDetector()
-
-        # Train with small dataset
-        train_data = transaction_generator.generate_transactions(n_transactions=50)
         X_train = pd.DataFrame(
             [
                 feature_processor.transform_single(row.to_dict())

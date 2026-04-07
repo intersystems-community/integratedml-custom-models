@@ -482,6 +482,43 @@ USING {"model_name": "MyClassifier"}  -- Will fail
 
 ---
 
+#### FR-018: USING Clause Parameter Names Use No-Underscore Camelcase
+
+**Severity**: High (breaking — silent failure)
+
+**Description**: JSON parameter keys in the `USING` clause that contain underscores are silently ignored by IRIS. The AutoML engine only recognizes concatenated (no-underscore) parameter names.
+
+**Affected parameters**:
+
+| Wrong (silently ignored) | Correct |
+|--------------------------|---------|
+| `path_to_classifiers` | `pathtoclassifiers` |
+| `path_to_regressors` | `pathtoregressors` |
+| `isc_models_disabled` | `iscmodelsdisabled` |
+
+**Symptoms**:
+- `TRAIN MODEL` completes with no custom model loaded
+- IRIS falls back to built-in AutoML classifiers or raises `NoEstimatorChosen`
+- No error is raised for unrecognised keys
+
+**Workaround**:
+```sql
+CREATE MODEL FraudDetectionEnsemble PREDICTING (is_fraud) FROM TransactionData
+USING {"pathtoclassifiers": "/opt/irisapp/demos/fraud_detection/iris_models", "iscmodelsdisabled": 1}
+```
+
+**Additional requirements**:
+- The directory must contain `.py` files each defining a class named exactly `IRISModel`
+- `IRISModel` files must be fully self-contained (no imports from this repo)
+- `IRISModel` must expose `self.model`, `fit(X, y)`, `predict(X)`, `predict_proba(X)`, `get_params()`, `set_params(**params)`
+- Use `StandardScaler(with_mean=False)` — IRIS passes sparse matrices during cross-validation
+
+**Status**: Documentation gap; parameter names are fixed in the IRIS AutoML engine. All demo SQL files in this repo have been updated to use the correct names.
+
+**Tracking**: FR-018
+
+---
+
 #### BUG-006: PREDICT() Performance with Large Result Sets
 
 **Severity**: Low
