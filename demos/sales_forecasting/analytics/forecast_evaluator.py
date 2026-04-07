@@ -990,11 +990,72 @@ class ForecastEvaluator:
                     "Develop contingency plans for extreme demand scenarios"
                 )
 
-        # Operational recommendations
         recommendations.append("Establish regular forecast review and updating process")
         recommendations.append("Implement forecast performance monitoring dashboard")
 
         return recommendations
+
+    def calculate_accuracy_metrics(self, actual: pd.Series, forecast: pd.Series) -> dict:
+        if len(actual) != len(forecast):
+            raise ValueError(f"Length mismatch: actual={len(actual)}, forecast={len(forecast)}")
+        import warnings
+        mask = ~(actual.isna() | forecast.isna())
+        a, f = actual[mask].values, forecast[mask].values
+        if len(a) == 0:
+            raise ValueError("No data after removing NaNs")
+        errors = a - f
+        abs_errors = np.abs(errors)
+        mae = float(abs_errors.mean())
+        mse = float((errors ** 2).mean())
+        rmse = float(np.sqrt(mse))
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            pct_errors = np.abs(errors / np.where(a == 0, np.nan, a)) * 100
+        mape = float(np.nanmean(pct_errors))
+        smape_vals = 2 * abs_errors / (np.abs(a) + np.abs(f) + 1e-10) * 100
+        smape = float(smape_vals.mean())
+        ss_res = float((errors ** 2).sum())
+        ss_tot = float(((a - a.mean()) ** 2).sum())
+        if ss_tot > 0:
+            r2 = float(np.corrcoef(a, f)[0, 1] ** 2)
+        else:
+            r2 = 1.0
+        return {"mae": mae, "mse": mse, "rmse": rmse, "mape": mape, "smape": smape, "r2_score": r2}
+
+    def calculate_business_insights(self, actual: pd.Series, forecast: pd.Series) -> dict:
+        total_actual = float(actual.sum())
+        total_forecast = float(forecast.sum())
+        abs_error = abs(total_actual - total_forecast)
+        pct_error = abs_error / total_actual * 100 if total_actual != 0 else 0.0
+        bias = float((forecast - actual).mean())
+        direction = "over_forecast" if bias > 0.01 else ("under_forecast" if bias < -0.01 else "unbiased")
+        window = min(30, max(1, len(actual) // 4))
+        rolling = (forecast - actual).rolling(window).mean()
+        return {
+            "revenue_impact": {
+                "total_actual": total_actual,
+                "total_forecast": total_forecast,
+                "absolute_error": abs_error,
+                "percentage_error": pct_error,
+            },
+            "forecast_bias": {"mean_bias": bias, "bias_direction": direction},
+            "accuracy_trends": {"rolling_mean_error": rolling},
+        }
+
+    def evaluate_forecast(self, actual: pd.Series, forecast: pd.Series, **kwargs) -> dict:
+        metrics = self.calculate_accuracy_metrics(actual, forecast)
+        insights = self.calculate_business_insights(actual, forecast)
+        mape = metrics.get("mape", 100.0)
+        forecast_quality = float(max(0.0, min(1.0, 1.0 - mape / 100.0)))
+        confidence_level = float(max(0.0, min(1.0, forecast_quality * 0.9 + 0.05)))
+        return {
+            "accuracy_metrics": metrics,
+            "business_insights": insights,
+            "performance_analysis": {
+                "forecast_quality": forecast_quality,
+                "confidence_level": confidence_level,
+            },
+        }
 
 
 def main():
@@ -1083,3 +1144,69 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+def _simple_accuracy_metrics(actual: pd.Series, forecast: pd.Series) -> dict:
+    import warnings
+    mask = ~(actual.isna() | forecast.isna())
+    a, f = actual[mask].values, forecast[mask].values
+    if len(a) == 0:
+        raise ValueError("No overlapping data after removing NaNs")
+    if len(a) != len(f):
+        raise ValueError(f"Length mismatch: actual={len(a)}, forecast={len(f)}")
+    errors = a - f
+    abs_errors = np.abs(errors)
+    mae = float(abs_errors.mean())
+    mse = float((errors ** 2).mean())
+    rmse = float(np.sqrt(mse))
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        pct_errors = np.abs(errors / np.where(a == 0, np.nan, a)) * 100
+    mape = float(np.nanmean(pct_errors))
+    smape_vals = 2 * abs_errors / (np.abs(a) + np.abs(f) + 1e-10) * 100
+    smape = float(smape_vals.mean())
+    ss_res = float((errors ** 2).sum())
+    ss_tot = float(((a - a.mean()) ** 2).sum())
+    r2 = float(1 - ss_res / ss_tot) if ss_tot > 0 else 1.0
+    return {"mae": mae, "mse": mse, "rmse": rmse, "mape": mape, "smape": smape, "r2_score": r2}
+
+
+class _SimpleForecastEvaluator:
+    def calculate_accuracy_metrics(self, actual: pd.Series, forecast: pd.Series) -> dict:
+        if len(actual) != len(forecast):
+            raise ValueError(f"Length mismatch: actual={len(actual)}, forecast={len(forecast)}")
+        return _simple_accuracy_metrics(actual, forecast)
+
+    def calculate_business_insights(self, actual: pd.Series, forecast: pd.Series) -> dict:
+        total_actual = float(actual.sum())
+        total_forecast = float(forecast.sum())
+        abs_error = abs(total_actual - total_forecast)
+        pct_error = abs_error / total_actual * 100 if total_actual != 0 else 0.0
+        bias = float((forecast - actual).mean())
+        direction = "over_forecast" if bias > 0.01 else ("under_forecast" if bias < -0.01 else "unbiased")
+        rolling = (forecast - actual).rolling(min(30, len(actual) // 4)).mean() if len(actual) > 4 else (forecast - actual)
+        return {
+            "revenue_impact": {
+                "total_actual": total_actual,
+                "total_forecast": total_forecast,
+                "absolute_error": abs_error,
+                "percentage_error": pct_error,
+            },
+            "forecast_bias": {"mean_bias": bias, "bias_direction": direction},
+            "accuracy_trends": {"rolling_mean_error": rolling},
+        }
+
+    def evaluate_forecast(self, actual: pd.Series, forecast: pd.Series) -> dict:
+        metrics = self.calculate_accuracy_metrics(actual, forecast)
+        insights = self.calculate_business_insights(actual, forecast)
+        mape = metrics.get("mape", 100.0)
+        forecast_quality = float(max(0.0, min(1.0, 1.0 - mape / 100.0)))
+        confidence_level = float(max(0.0, min(1.0, forecast_quality * 0.9 + 0.05)))
+        return {
+            "accuracy_metrics": metrics,
+            "business_insights": insights,
+            "performance_analysis": {
+                "forecast_quality": forecast_quality,
+                "confidence_level": confidence_level,
+            },
+        }

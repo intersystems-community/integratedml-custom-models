@@ -1019,6 +1019,80 @@ class BusinessIntelligence:
 
         return opportunities
 
+    def calculate_core_kpis(self, actual: pd.Series, forecast: pd.Series) -> dict:
+        raw = self._calculate_core_kpis(actual, forecast)
+        return {
+            "total_revenue": raw["total_revenue"],
+            "average_daily_sales": raw["avg_daily_revenue"],
+            "forecast_accuracy": raw["forecast_accuracy"],
+            "revenue_growth": raw["revenue_growth_rate"],
+        }
+
+    def calculate_business_health(self, actual: pd.Series, forecast: pd.Series) -> dict:
+        raw = self._calculate_business_health(actual, forecast)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            pct_errs = np.abs((actual.values - forecast.values) / np.where(actual.values == 0, np.nan, actual.values))
+        mape = float(np.nanmean(pct_errs) * 100) if len(actual) else 50.0
+        forecast_reliability = max(0.0, min(10.0, (1.0 - mape / 100.0) * 10.0))
+        x = np.arange(len(actual))
+        corr = float(np.corrcoef(x, actual.values)[0, 1]) if len(actual) > 1 else 0.0
+        trend_stability = max(0.0, min(10.0, abs(corr) * 10.0))
+        return {
+            "overall_health_score": raw["overall_health_score"],
+            "forecast_reliability": forecast_reliability,
+            "trend_stability": trend_stability,
+        }
+
+    def analyze_trends(self, actual: pd.Series, forecast: pd.Series) -> dict:
+        x = np.arange(len(actual))
+        actual_trend = float(np.polyfit(x, actual.values, 1)[0]) if len(actual) > 1 else 0.0
+        xf = np.arange(len(forecast))
+        forecast_trend = float(np.polyfit(xf, forecast.values, 1)[0]) if len(forecast) > 1 else 0.0
+        trend_accuracy = 1.0 - abs(actual_trend - forecast_trend) / (abs(actual_trend) + 1e-10)
+        return {
+            "actual_trend": actual_trend,
+            "forecast_trend": forecast_trend,
+            "trend_accuracy": float(max(0.0, min(1.0, trend_accuracy))),
+        }
+
+    def analyze_scenarios(self, actual: pd.Series, scenarios: dict) -> dict:
+        results = {}
+        for name, scenario_forecast in scenarios.items():
+            a = actual.values
+            f = scenario_forecast.values
+            with np.errstate(divide="ignore", invalid="ignore"):
+                pct_errs = np.abs((a - f) / np.where(a == 0, np.nan, a))
+            mape = float(np.nanmean(pct_errs) * 100)
+            results[name] = {"scenario_metrics": {"accuracy": max(0.0, 100.0 - mape), "mape": mape}}
+        return results
+
+    def calculate_roi_metrics(self, actual: pd.Series, forecast: pd.Series) -> dict:
+        errors = np.abs(actual.values - forecast.values)
+        cost_of_errors = float(errors.sum() * 0.05)
+        forecast_value = float(actual.sum() * 0.02)
+        return {
+            "forecast_value": forecast_value,
+            "cost_of_forecast_errors": cost_of_errors,
+            "accuracy_improvement_value": max(0.0, forecast_value - cost_of_errors * 0.1),
+        }
+
+    def generate_executive_dashboard(
+        self,
+        sales_data: pd.Series,
+        forecast_data: pd.Series,
+        additional_metrics=None,
+    ) -> dict:
+        core_kpis = self.calculate_core_kpis(sales_data, forecast_data)
+        health = self.calculate_business_health(sales_data, forecast_data)
+        strategic = self._generate_strategic_recommendations(sales_data, forecast_data, self._calculate_core_kpis(sales_data, forecast_data))
+        summary = {"key_insights": [f"Total revenue: {core_kpis['total_revenue']:.0f}", f"Forecast accuracy: {core_kpis['forecast_accuracy']:.1f}%"]}
+        return {
+            "core_kpis": core_kpis,
+            "business_health": health,
+            "executive_summary": summary,
+            "recommendations": strategic,
+        }
+
 
 def main():
     """Example usage of BusinessIntelligence."""

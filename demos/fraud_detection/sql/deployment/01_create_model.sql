@@ -145,9 +145,9 @@ CREATE MODEL FraudDetectionEnsemble
 PREDICTING (is_fraud)
 FROM TransactionFeatures
 USING {
-    "path_to_classifiers": "/opt/iris/mgr/python/custom_models/classifiers",
-    "model_name": "EnsembleFraudDetector",
-    "isc_models_disabled": 1,
+    "pathtoclassifiers": "/opt/irisapp/demos/fraud_detection/iris_models",
+    
+    "iscmodelsdisabled": 1,
     "user_params": {
         "enable_neural": 1,
         "enable_rules": 1,
@@ -385,9 +385,9 @@ BEGIN
     PREDICTING (is_fraud)
     FROM TransactionFeatures
     USING {
-        "path_to_classifiers": "/opt/iris/mgr/python/custom_models/classifiers",
-        "model_name": "EnsembleFraudDetector",
-        "isc_models_disabled": 1,
+        "pathtoclassifiers": "/opt/irisapp/demos/fraud_detection/iris_models",
+        
+        "iscmodelsdisabled": 1,
         "user_params": {
             "enable_neural": 1,
             "enable_rules": 1,

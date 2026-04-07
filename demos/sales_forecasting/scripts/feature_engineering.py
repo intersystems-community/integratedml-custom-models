@@ -327,6 +327,16 @@ class TimeSeriesFeatureEngineer:
         interaction_features = self._create_interaction_features(features)
         features = pd.concat([features, interaction_features], axis=1)
 
+        if self.target_col in data.columns:
+            features["target"] = data[self.target_col].values
+
+        reserved = {self.target_col, self.date_col, "target"}
+        for col in data.columns:
+            if col not in reserved and col not in features.columns:
+                features[col] = data[col].values
+
+        return features
+
     def engineer_features(
         self, target_series: pd.Series, external_factors: pd.DataFrame = None
     ) -> pd.DataFrame:
@@ -398,150 +408,52 @@ class TimeSeriesFeatureEngineer:
         return features
 
     def _create_lag_features(self, target: pd.Series) -> pd.DataFrame:
-        """Create lag features."""
         features = pd.DataFrame(index=target.index)
 
         for lag in self.lag_features:
-            features[f"lag_{lag}"] = target.shift(lag)
+            features[f"sales_lag_{lag}"] = target.shift(lag)
 
-            # Lag differences
             if lag > 1:
                 features[f"lag_diff_{lag}"] = target.shift(lag) - target.shift(lag + 1)
 
         return features
 
     def _create_rolling_features(self, target: pd.Series) -> pd.DataFrame:
-        """Create rolling statistics features."""
         features = pd.DataFrame(index=target.index)
 
         for window in self.rolling_windows:
-            # Basic rolling statistics
-            features[f"rolling_mean_{window}"] = target.rolling(
-                window=window, min_periods=1
-            ).mean()
-            features[f"rolling_std_{window}"] = target.rolling(
-                window=window, min_periods=1
-            ).std()
-            features[f"rolling_min_{window}"] = target.rolling(
-                window=window, min_periods=1
-            ).min()
-            features[f"rolling_max_{window}"] = target.rolling(
-                window=window, min_periods=1
-            ).max()
-            features[f"rolling_median_{window}"] = target.rolling(
-                window=window, min_periods=1
-            ).median()
-
-            # Rolling differences
-            features[f"rolling_range_{window}"] = (
-                features[f"rolling_max_{window}"] - features[f"rolling_min_{window}"]
-            )
-
-            # Rolling percentiles
-            features[f"rolling_q25_{window}"] = target.rolling(
-                window=window, min_periods=1
-            ).quantile(0.25)
-            features[f"rolling_q75_{window}"] = target.rolling(
-                window=window, min_periods=1
-            ).quantile(0.75)
-
-            # Position relative to rolling statistics
-            features[f"target_vs_rolling_mean_{window}"] = (
-                target / features[f"rolling_mean_{window}"]
-            )
-            features[f"target_rolling_zscore_{window}"] = (
-                target - features[f"rolling_mean_{window}"]
-            ) / features[f"rolling_std_{window}"]
+            features[f"sales_ma_{window}"] = target.rolling(window=window, min_periods=window).mean()
+            features[f"sales_std_{window}"] = target.rolling(window=window, min_periods=window).std()
+            features[f"rolling_min_{window}"] = target.rolling(window=window, min_periods=1).min()
+            features[f"rolling_max_{window}"] = target.rolling(window=window, min_periods=1).max()
 
         return features
 
     def _create_trend_features(
-        self, target: pd.Series, dates: pd.Series
+        self, target: pd.Series, dates: pd.Series = None
     ) -> pd.DataFrame:
-        """Create trend-based features."""
         features = pd.DataFrame(index=target.index)
-
-        # Linear trend
-        features["trend"] = np.arange(len(target))
-        features["trend_squared"] = features["trend"] ** 2
-
-        # Local trends (slopes over different windows)
-        for window in [7, 30, 90]:
-            if len(target) > window:
-                slopes = []
-                for i in range(len(target)):
-                    start_idx = max(0, i - window + 1)
-                    end_idx = i + 1
-
-                    if end_idx - start_idx >= 2:
-                        y_vals = target.iloc[start_idx:end_idx].values
-                        x_vals = np.arange(len(y_vals))
-
-                        # Calculate slope using linear regression
-                        if len(y_vals) > 1 and not np.all(np.isnan(y_vals)):
-                            slope = np.polyfit(x_vals, y_vals, 1)[0]
-                        else:
-                            slope = 0
-                    else:
-                        slope = 0
-
-                    slopes.append(slope)
-
-                features[f"trend_slope_{window}"] = slopes
-
-        # Detrended values
-        if len(target) > 2:
-            x_vals = np.arange(len(target))
-            y_vals = target.values
-
-            # Fit linear trend
-            valid_mask = ~np.isnan(y_vals)
-            if np.sum(valid_mask) > 1:
-                trend_coef = np.polyfit(x_vals[valid_mask], y_vals[valid_mask], 1)
-                trend_line = np.polyval(trend_coef, x_vals)
-                features["detrended"] = y_vals - trend_line
-            else:
-                features["detrended"] = 0
-
+        features["trend_linear"] = np.arange(len(target))
+        features["sales_pct_change"] = target.pct_change()
         return features
 
-    def _create_seasonal_features(self, dates: pd.Series) -> pd.DataFrame:
-        """Create seasonal decomposition features."""
+    def _create_seasonal_features(self, target_or_dates) -> pd.DataFrame:
+        if isinstance(target_or_dates, pd.Series) and not hasattr(target_or_dates, 'dt'):
+            dates = pd.Series(target_or_dates.index, index=target_or_dates.index)
+        else:
+            dates = target_or_dates
+
         features = pd.DataFrame(index=dates.index)
+        features["year"] = dates.dt.year
+        features["month"] = dates.dt.month
+        features["day"] = dates.dt.day
+        features["dayofweek"] = dates.dt.dayofweek
+        features["quarter"] = dates.dt.quarter
 
-        # Cyclical encoding for different periods
-        periods = {
-            "year": 365.25,
-            "month": 30.44,  # Average days per month
-            "week": 7,
-            "day": 1,
-        }
-
-        for period_name, period_days in periods.items():
-            if period_name == "year":
-                values = dates.dt.dayofyear / period_days
-            elif period_name == "month":
-                values = dates.dt.day / period_days
-            elif period_name == "week":
-                values = dates.dt.dayofweek / period_days
-            else:
-                values = dates.dt.hour / 24  # For daily, use hour if available
-
-            # Sine and cosine encoding for cyclical nature
-            features[f"sin_{period_name}"] = np.sin(2 * np.pi * values)
-            features[f"cos_{period_name}"] = np.cos(2 * np.pi * values)
-
-        # Month indicators (for seasonal patterns)
-        for month in range(1, 13):
-            features[f"month_{month}"] = (dates.dt.month == month).astype(int)
-
-        # Quarter indicators
-        for quarter in range(1, 5):
-            features[f"quarter_{quarter}"] = (dates.dt.quarter == quarter).astype(int)
-
-        # Day of week indicators
-        for dow in range(7):
-            features[f"dow_{dow}"] = (dates.dt.dayofweek == dow).astype(int)
+        features["month_sin"] = np.sin(2 * np.pi * dates.dt.month / 12)
+        features["month_cos"] = np.cos(2 * np.pi * dates.dt.month / 12)
+        features["dayofweek_sin"] = np.sin(2 * np.pi * dates.dt.dayofweek / 7)
+        features["dayofweek_cos"] = np.cos(2 * np.pi * dates.dt.dayofweek / 7)
 
         return features
 
@@ -657,12 +569,12 @@ class TimeSeriesFeatureEngineer:
         interaction_features = pd.DataFrame(index=features.index)
 
         # Select key features for interactions
-        key_patterns = ["lag_", "rolling_mean_", "trend", "is_weekend", "month_"]
+        key_patterns = ["sales_lag_", "sales_ma_", "trend_linear", "is_weekend", "is_month_"]
         key_features = []
 
         for pattern in key_patterns:
             matching_cols = [col for col in features.columns if pattern in col]
-            key_features.extend(matching_cols[:2])  # Limit to prevent explosion
+            key_features.extend(matching_cols[:1])
 
         # Create interactions between key features
         for i, feat1 in enumerate(key_features):

@@ -14,9 +14,9 @@ CREATE OR REPLACE MODEL SalesForecast.HybridForecasting
 PREDICTING (SalesAmount)
 FROM SalesForecast.ForecastingView
 USING {
-    "path_to_regressors": "/opt/iris/mgr/python/custom_models/regressors",
-    "model_name": "HybridForecastingModel",
-    "isc_models_disabled": 1,
+    "pathtoregressors": "/opt/irisapp/demos/sales_forecasting/iris_models",
+    
+    "iscmodelsdisabled": 1,
     "user_params": {
         "prophet_config": {
             "seasonality_mode": "multiplicative",

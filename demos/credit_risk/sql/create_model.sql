@@ -107,10 +107,10 @@ CREATE TABLE NewCreditApplications (
 CREATE MODEL CreditRiskModel PREDICTING (default_risk)
 FROM CreditApplications
 USING {
-    "path_to_classifiers": "/opt/iris/mgr/python/custom_models/classifiers",
-    "path_to_regressors": "/opt/iris/mgr/python/custom_models/regressors",
-    "model_name": "CustomCreditRiskClassifier",
-    "isc_models_disabled": 1,
+    "pathtoclassifiers": "/opt/irisapp/demos/credit_risk/iris_models",
+    ,
+    
+    "iscmodelsdisabled": 1,
     "user_params": {
         "enable_debt_ratio": 1,
         "enable_interaction_terms": 1,
@@ -123,10 +123,10 @@ USING {
 CREATE MODEL ConservativeCreditModel PREDICTING (default_risk)
 FROM CreditApplications
 USING {
-    "path_to_classifiers": "/opt/iris/mgr/python/custom_models/classifiers",
-    "path_to_regressors": "/opt/iris/mgr/python/custom_models/regressors",
-    "model_name": "CustomCreditRiskClassifier",
-    "isc_models_disabled": 1,
+    "pathtoclassifiers": "/opt/irisapp/demos/credit_risk/iris_models",
+    ,
+    
+    "iscmodelsdisabled": 1,
     "user_params": {
         "enable_debt_ratio": 1,
         "enable_interaction_terms": 0,
@@ -139,10 +139,10 @@ USING {
 CREATE MODEL FastCreditModel PREDICTING (default_risk)
 FROM CreditApplications
 USING {
-    "path_to_classifiers": "/opt/iris/mgr/python/custom_models/classifiers",
-    "path_to_regressors": "/opt/iris/mgr/python/custom_models/regressors",
-    "model_name": "CustomCreditRiskClassifier",
-    "isc_models_disabled": 1,
+    "pathtoclassifiers": "/opt/irisapp/demos/credit_risk/iris_models",
+    ,
+    
+    "iscmodelsdisabled": 1,
     "user_params": {
         "enable_debt_ratio": 1,
         "enable_interaction_terms": 0,

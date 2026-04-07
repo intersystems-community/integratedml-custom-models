@@ -131,6 +131,8 @@ dmypy.json
 # ML/Data Science specific
 # Model artifacts and checkpoints
 models/
+!demos/*/models/
+!demos/*/models/*.py
 *.pkl
 *.pickle
 *.joblib
