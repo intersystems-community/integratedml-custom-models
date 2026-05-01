@@ -104,6 +104,10 @@ demo-dna:
 	@echo "🧬 Running DNA Similarity demo..."
 	python run_dna_similarity_demo.py
 
+demo-ai-functions:
+	@echo "🤖 Running AI Functions demo (sentiment, classify, summarize, translate, embed, extract, complete)..."
+	python run_ai_functions_demo.py
+
 # Quick demo runner
 demos: start
 	@echo "🎬 Running all demos..."
@@ -111,6 +115,7 @@ demos: start
 	@$(MAKE) demo-fraud
 	@$(MAKE) demo-sales
 	@$(MAKE) demo-dna
+	@$(MAKE) demo-ai-functions
 	@echo "✅ All demos completed!"
 
 # Status check

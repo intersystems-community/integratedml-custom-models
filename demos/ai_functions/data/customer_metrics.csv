@@ -1,0 +1,11 @@
+user_id,login_freq,avg_sentiment,days_since_purchase,plan
+1001,28,0.42,5,Pro
+1002,2,-0.55,90,Pro
+1003,15,0.18,12,Enterprise
+1004,0,-0.80,180,Pro
+1005,22,0.35,3,Free
+1006,5,-0.20,60,Pro
+1007,30,0.62,1,Enterprise
+1008,1,-0.70,120,Pro
+1009,18,0.10,18,Free
+1010,0,-0.10,200,Pro

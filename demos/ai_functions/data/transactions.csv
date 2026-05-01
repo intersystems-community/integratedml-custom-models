@@ -1,0 +1,11 @@
+transaction_id,user_id,amount,description,timestamp
+1,1001,42.50,"Purchase at Local Coffee Shop",2026-01-12 09:15:00
+2,1001,500.00,"Online Gambling at LuckyBet Casino",2026-01-13 03:42:00
+3,1002,89.99,"Online order at Acme Bookstore",2026-01-13 11:20:00
+4,1002,1200.00,"Wire transfer to unknown overseas account",2026-01-13 02:55:00
+5,1003,15.40,"Grocery purchase at Fresh Market",2026-01-13 18:00:00
+6,1003,85.00,"Restaurant bill at Bistro Nine",2026-01-13 20:30:00
+7,1004,4500.00,"Electronics purchase at MegaTech",2026-01-13 04:12:00
+8,1004,32.00,"Subway monthly pass",2026-01-13 08:00:00
+9,1005,9.99,"Streaming subscription renewal",2026-01-13 06:00:00
+10,1005,950.00,"Hotel booking at City Center Suites",2026-01-13 22:00:00

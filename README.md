@@ -113,6 +113,17 @@ Sequence analysis using custom similarity algorithms.
 - **Test Data**: 5,000 sequences
 - **Features**: GC content, motif search
 
+### 5. AI Functions (SQL-native generative AI)
+Brings SingleStore-style `AI_COMPLETE` / `AI_SENTIMENT` / `AI_TRANSLATE` /
+`EMBED_TEXT` / `AI_SUMMARIZE` / `AI_CLASSIFY` / `AI_EXTRACT` primitives into
+IRIS as IntegratedML Custom Models. Each AI Function is a self-contained
+`IRISModel` callable from SQL via `PREDICT(...)`.
+
+- **Models**: 7 IRISModel classes (one per AI Function)
+- **Backends**: Offline-by-default (lexicons, TF-IDF, regex), Anthropic Claude for `AI_COMPLETE` when `ANTHROPIC_API_KEY` is set
+- **Use cases**: support-ticket triage, real-time fraud detection, customer churn prediction
+- See [demos/ai_functions/README.md](demos/ai_functions/README.md)
+
 ## Quick Start
 
 ### Prerequisites
@@ -149,6 +160,9 @@ make demo-sales
 
 # DNA Similarity
 make demo-dna
+
+# AI Functions (SQL-native generative AI primitives)
+make demo-ai-functions
 ```
 
 ## Documentation

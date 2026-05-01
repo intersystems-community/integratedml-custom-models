@@ -1,0 +1,16 @@
+review_id,review_text,sentiment
+1,"Absolutely love these shoes! Comfortable and stylish, I wear them everywhere.",positive
+2,"Terrible quality. Fell apart after one week of normal use. Want a refund.",negative
+3,"They are okay. Nothing special but they do the job.",neutral
+4,"Best purchase I've made this year. Highly recommended!",positive
+5,"Awful experience. The product arrived broken and customer service was useless.",negative
+6,"Fits well, color is accurate. Pretty good for the price.",positive
+7,"Very disappointing. The fabric is thin and the stitching is poor.",negative
+8,"Average product. Does what it says on the box.",neutral
+9,"Fantastic! Exceeded my expectations in every way.",positive
+10,"Not what I expected based on the photos. Returning it.",negative
+11,"It works. I have no strong feelings either way.",neutral
+12,"Super fast delivery and the quality is amazing. Will buy again.",positive
+13,"Slow shipping and the item is overpriced for what you get.",negative
+14,"Solid product. I'd recommend it to friends.",positive
+15,"Not great, not terrible. It's fine.",neutral
