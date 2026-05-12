@@ -1,0 +1,11 @@
+article_id,title,article_body
+1,"Vector databases in 2025","Vector databases store high-dimensional embeddings and let applications retrieve semantically similar items by approximate nearest neighbor search. They are central to RAG pipelines."
+2,"Operational AI patterns","Operational AI brings model inference next to live data so that recommendations, fraud scoring, and personalization can run with sub-second latency on the freshest events."
+3,"Embeddings explained","An embedding maps a piece of text or media into a fixed-length numeric vector that captures meaning. Cosine similarity over embeddings approximates semantic similarity."
+4,"Hybrid transactional analytics","Hybrid transactional and analytical processing systems run mixed OLTP and OLAP workloads on the same data, removing the lag between writes and analytics."
+5,"Why bring models to data","Moving small results back from a database is cheap. Moving large datasets out to a model is expensive. Co-locating compute and storage flips the cost curve in the right direction."
+6,"Choosing an embedding dimension","Higher-dimensional embeddings retain more nuance but cost more at retrieval time. 384 to 1024 dimensions is a common sweet spot for production semantic search."
+7,"Sentiment analysis at scale","Sentiment analysis turns free-text feedback into actionable signal. At scale you need both throughput and a clear mapping from raw text to business decisions."
+8,"Real-time fraud signals","Fraud detection benefits from combining velocity rules, behavioral baselines and language-aware reasoning over transaction descriptions."
+9,"Customer churn prediction","Churn prediction blends behavioral telemetry — login frequency, feature use, recency — with signals derived from support sentiment and NPS surveys."
+10,"Semantic search vs keyword search","Keyword search is fast and precise for known queries. Semantic search shines when users phrase their intent in unfamiliar language. Hybrid systems use both."

@@ -1,0 +1,11 @@
+comment_id,comment_text,source_lang,target_lang
+1,"Muy bueno, me encanta el producto",Spanish,English
+2,"No funciona, es muy malo",Spanish,English
+3,"Très bon produit, je recommande",French,English
+4,"Le service ne fonctionne pas",French,English
+5,"Sehr gut, vielen Dank!",German,English
+6,"Funktioniert nicht, sehr schlecht",German,English
+7,"Muito bom produto, eu adoro",Portuguese,English
+8,"Não funciona, muito ruim",Portuguese,English
+9,"Buenos días, gracias por el envío rápido",Spanish,English
+10,"Bonjour, merci beaucoup pour la livraison",French,English
