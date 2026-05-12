@@ -1,6 +1,6 @@
 import pandas as pd
 
-from iris_models.ai_classify import IRISModel
+from demos.ai_functions.iris_models.ai_classify import IRISModel
 
 
 def test_zero_shot_routing_against_default_seed_categories():

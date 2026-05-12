@@ -108,6 +108,10 @@ demo-ai-functions:
 	@echo "🤖 Running AI Functions demo (sentiment, classify, summarize, translate, embed, extract, complete)..."
 	python run_ai_functions_demo.py
 
+demo-tabpfn:
+	@echo "🧠 Running TabPFN-3 foundation-model demo (classification + regression)..."
+	python run_tabpfn_demo.py
+
 # Quick demo runner
 demos: start
 	@echo "🎬 Running all demos..."
@@ -116,6 +120,7 @@ demos: start
 	@$(MAKE) demo-sales
 	@$(MAKE) demo-dna
 	@$(MAKE) demo-ai-functions
+	@$(MAKE) demo-tabpfn
 	@echo "✅ All demos completed!"
 
 # Status check

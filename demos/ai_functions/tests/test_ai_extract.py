@@ -1,6 +1,6 @@
 import pandas as pd
 
-from iris_models.ai_extract import IRISModel
+from demos.ai_functions.iris_models.ai_extract import IRISModel
 
 
 CONTRACT_A = (

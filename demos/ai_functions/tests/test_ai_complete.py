@@ -2,7 +2,7 @@ import os
 
 import pandas as pd
 
-from iris_models.ai_complete import IRISModel
+from demos.ai_functions.iris_models.ai_complete import IRISModel
 
 
 def test_offline_stub_handles_marketing_prompt():

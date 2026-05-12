@@ -1,6 +1,6 @@
 import pandas as pd
 
-from iris_models.ai_translate import IRISModel
+from demos.ai_functions.iris_models.ai_translate import IRISModel
 
 
 def test_spanish_to_english_phrase_book():

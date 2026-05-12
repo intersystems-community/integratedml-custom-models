@@ -254,3 +254,9 @@ demos/ai_functions/iris_models/_staging/
 # AI Functions demo: keep the small sample CSVs that ship with the demo
 # even though *.csv is globally ignored above.
 !demos/ai_functions/data/*.csv
+
+# TabPFN-3 demo: generated per-model staging directories.
+demos/tabpfn_foundation/iris_models/_staging/
+
+# TabPFN-3 demo: keep the small sample CSVs that ship with the demo.
+!demos/tabpfn_foundation/data/*.csv

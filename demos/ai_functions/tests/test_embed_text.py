@@ -3,7 +3,7 @@ import json
 import numpy as np
 import pandas as pd
 
-from iris_models.embed_text import IRISModel
+from demos.ai_functions.iris_models.embed_text import IRISModel
 
 
 def test_embeddings_are_normalised_to_unit_length():

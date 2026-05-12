@@ -124,6 +124,16 @@ IRIS as IntegratedML Custom Models. Each AI Function is a self-contained
 - **Use cases**: support-ticket triage, real-time fraud detection, customer churn prediction
 - See [demos/ai_functions/README.md](demos/ai_functions/README.md)
 
+### 6. TabPFN-3 Tabular Foundation Model
+Wraps Prior Labs' [TabPFN-3](https://priorlabs.ai/technical-reports/tabpfn-3)
+— a transformer foundation model that performs in-context learning on
+tabular data — as IRIS IntegratedML Custom Models.
+
+- **Models**: `TabPFNClassifier` and `TabPFNRegressor` IRISModels
+- **Backend**: TabPFN-3 open weights (`pip install tabpfn`), with scikit-learn `GradientBoosting` fallback for offline runs
+- **Use cases**: patient risk screening (classification), building energy consumption (regression)
+- See [demos/tabpfn_foundation/README.md](demos/tabpfn_foundation/README.md)
+
 ## Quick Start
 
 ### Prerequisites
@@ -163,6 +173,9 @@ make demo-dna
 
 # AI Functions (SQL-native generative AI primitives)
 make demo-ai-functions
+
+# TabPFN-3 (tabular foundation model)
+make demo-tabpfn
 ```
 
 ## Documentation
