@@ -131,10 +131,10 @@ df["is_variable"] = (df["pct_change"] >= threshold).astype(int)
 def iris_connect():
     try:
         from iris_embedded_python import dbapi
-        return dbapi.connect(namespace="USER")
+        return dbapi.connect(namespace="USER", mode="embedded")
     except (ImportError, Exception):
-        import intersystems_iris.dbapi as dbapi
-        return dbapi.connect(
+        import intersystems_iris
+        return intersystems_iris.dbapi.connect(
             hostname="localhost", port=1972,
             namespace="USER", username="demo", password="demo",
         )

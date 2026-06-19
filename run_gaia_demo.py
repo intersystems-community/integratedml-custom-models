@@ -105,9 +105,10 @@ def iris_connect():
     try:
         from iris_embedded_python import dbapi
         log.info("Using Embedded Python dbapi (in-process)")
-        return dbapi.connect(namespace=IRIS_NS)
+        return dbapi.connect(namespace=IRIS_NS, mode="embedded")
     except (ImportError, Exception):
-        import intersystems_iris.dbapi as dbapi
+        import intersystems_iris
+        dbapi = intersystems_iris.dbapi
         log.info("Using TCP dbapi (%s:%s)", IRIS_HOST, IRIS_PORT)
         return dbapi.connect(
             hostname=IRIS_HOST, port=IRIS_PORT,

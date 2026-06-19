@@ -29,9 +29,10 @@ def _iris_dbapi():
     """Return dbapi module: Embedded Python (in-process) preferred, TCP fallback."""
     try:
         from iris_embedded_python import dbapi
-        return dbapi, {}
+        return dbapi, {"mode": "embedded"}
     except (ImportError, Exception):
-        import intersystems_iris.dbapi as dbapi
+        import intersystems_iris
+        dbapi = intersystems_iris.dbapi
         return dbapi, {
             "hostname": os.getenv("IRIS_HOST", "localhost"),
             "port": int(os.getenv("IRIS_PORT", "1972")),
