@@ -30,15 +30,15 @@ FROM AIFunctions.SupportTickets;
 
 ## What's in the box
 
-| AI Function     | IRISModel file                       | Default backend                      |
-|-----------------|--------------------------------------|--------------------------------------|
-| `AI_SENTIMENT`  | `iris_models/ai_sentiment.py`        | VADER-style lexicon scorer           |
-| `AI_CLASSIFY`   | `iris_models/ai_classify.py`         | TF-IDF + cosine similarity (zero/few-shot) |
-| `AI_SUMMARIZE`  | `iris_models/ai_summarize.py`        | TextRank-lite extractive summarizer  |
-| `AI_TRANSLATE`  | `iris_models/ai_translate.py`        | Phrase-book + word-level dictionary  |
-| `EMBED_TEXT`    | `iris_models/embed_text.py`          | Hashing trick + L2-normalised TF-IDF |
-| `AI_EXTRACT`    | `iris_models/ai_extract.py`          | Question-aware regex pipeline        |
-| `AI_COMPLETE`   | `iris_models/ai_complete.py`         | Anthropic Claude (offline stub fallback) |
+| AI Function    | IRISModel file                | Default backend                      |
+| -------------- | ----------------------------- | ------------------------------------ |
+| `AI_SENTIMENT` | `iris_models/ai_sentiment.py` | VADER-style lexicon scorer           |
+| `AI_CLASSIFY`  | `iris_models/ai_classify.py`  | TF-IDF + cosine similarity           |
+| `AI_SUMMARIZE` | `iris_models/ai_summarize.py` | TextRank-lite extractive summarizer  |
+| `AI_TRANSLATE` | `iris_models/ai_translate.py` | Phrase-book + word-level dictionary  |
+| `EMBED_TEXT`   | `iris_models/embed_text.py`   | Hashing trick + L2-normalised TF-IDF |
+| `AI_EXTRACT`   | `iris_models/ai_extract.py`   | Question-aware regex pipeline        |
+| `AI_COMPLETE`  | `iris_models/ai_complete.py`  | Anthropic Claude (offline fallback)  |
 
 The default backends are intentionally lightweight so the demo runs offline
 with no API key. `AI_COMPLETE` switches to the real Claude API
@@ -50,7 +50,7 @@ the same.
 
 ## Repo layout
 
-```
+```text
 demos/ai_functions/
 ├── iris_models/         # The 7 self-contained IRISModel files (deployed to IRIS)
 │   └── _staging/        # Per-function staging dirs (created by deploy_models.py)

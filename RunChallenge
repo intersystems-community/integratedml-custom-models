@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# RunChallenge — Gaia Variable Star Detection
+# Runs without manual input; outputs CSV to stdout.
+# Threshold defaults to 10% but can be overridden: THRESHOLD=5 ./RunChallenge
+set -euo pipefail
+
+THRESHOLD="${THRESHOLD:-10}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# ── 1. Start IRIS if not already running ────────────────────────────────────
+if ! docker ps --format '{{.Names}}' 2>/dev/null | grep -q "^integratedml_iris$"; then
+  echo "Starting IRIS container..." >&2
+  docker compose -f "$SCRIPT_DIR/docker-compose.yml" up -d iris >&2
+  echo "Waiting for IRIS to be ready..." >&2
+  sleep 30
+fi
+
+# ── 2. Install Python deps ───────────────────────────────────────────────────
+if command -v uv &>/dev/null; then
+  uv pip install --quiet astroquery intersystems-iris 2>/dev/null || true
+else
+  pip install --quiet astroquery intersystems-iris 2>/dev/null || true
+fi
+
+# ── 3. Run the pipeline — ingest + query — prints CSV to stdout ──────────────
+python "$SCRIPT_DIR/run_gaia_demo.py" --threshold "$THRESHOLD"

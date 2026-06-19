@@ -1,0 +1,70 @@
+name: Run Challenge — Gaia Variable Star Detection
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'RunChallenge'
+      - 'run_gaia_demo.py'
+      - 'demos/gaia_variable_stars/**'
+  workflow_dispatch:
+    inputs:
+      threshold:
+        description: 'Brightness change threshold (%)'
+        required: false
+        default: '10'
+
+env:
+  THRESHOLD: ${{ github.event.inputs.threshold || '10' }}
+  IRIS_HOST: localhost
+  IRIS_PORT: 1972
+  IRIS_NAMESPACE: USER
+  IRIS_USERNAME: demo
+  IRIS_PASSWORD: demo
+
+jobs:
+  run-challenge:
+    name: Gaia Variable Star Detection
+    runs-on: ubuntu-latest
+
+    services:
+      iris:
+        image: containers.intersystems.com/intersystems/iris-ml:latest-em
+        ports:
+          - 1972:1972
+          - 52773:52773
+        env:
+          ISC_DATA_DIRECTORY: /opt/irisapp/data
+        options: >-
+          --health-cmd "iris session iris -U USER '##class(%SYSTEM.Process).CurrentDirectory()'"
+          --health-interval 30s
+          --health-timeout 10s
+          --health-retries 10
+          --health-start-period 90s
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install astroquery intersystems-iris scikit-learn pandas numpy
+
+      - name: Run challenge pipeline
+        run: |
+          chmod +x RunChallenge
+          # Skip docker start (service already running), run Python directly
+          python run_gaia_demo.py --threshold "$THRESHOLD" | tee challenge_output.csv
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: variable-stars-${{ env.THRESHOLD }}pct
+          path: challenge_output.csv

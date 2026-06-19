@@ -18,6 +18,12 @@ notebook>=6.4.0
 pytest>=6.2.0
 pytest-cov>=3.0.0
 
+# Astronomical Data
+astroquery>=0.4.7
+
+# IRIS Embedded Python integration (in-process, no TCP; binds local venv to IRIS)
+iris-embedded-python-wrapper>=0.5.0
+
 # Utilities
 requests>=2.25.0
 pyyaml>=6.0

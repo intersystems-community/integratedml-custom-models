@@ -16,12 +16,14 @@ for the InterSystems IRIS 2026.1 release. Until then, this repository will be th
 and information about the feature.
 
 ### Getting Started with EAP
+
 1. **[Read the EAP Guide](docs/EAP_GUIDE.md)** - Understand the program, timeline, and expectations
 2. **[Install Custom Models](docs/INSTALLATION.md)** - Complete installation in <30 minutes (target)
 3. **[Check Known Issues](docs/EAP_KNOWN_ISSUES.md)** - Review current limitations before reporting bugs
 4. **[Review Roadmap](docs/EAP_ROADMAP.md)** - See what's coming from EAP to GA
 
 ### How to Provide Feedback
+
 Your feedback directly shapes the final product! Choose your preferred channel:
 
 - **Survey** (recommended): Survey links provided by Data Platforms Product Team
@@ -30,7 +32,7 @@ Your feedback directly shapes the final product! Choose your preferred channel:
 
 **Response time**: 1-2 business days during EAP
 
-For questions or support, see [EAP FAQ](docs/EAP_FAQ.md) or email thomas.dyar@intersystems.com.
+For questions or support, see [EAP FAQ](docs/EAP_FAQ.md) or email <thomas.dyar@intersystems.com>.
 
 ---
 
@@ -86,6 +88,7 @@ FROM NewApplications
 ## Demo Applications
 
 ### 1. Credit Risk Assessment
+
 Financial risk modeling with custom feature engineering for loan default prediction.
 
 - **Model**: Custom ensemble classifier
@@ -93,6 +96,7 @@ Financial risk modeling with custom feature engineering for loan default predict
 - **Training Time**: ~2.3 seconds
 
 ### 2. Fraud Detection
+
 Transaction fraud detection using ensemble methods.
 
 - **Model**: Multi-model ensemble (Neural + Rules + Anomaly)
@@ -100,6 +104,7 @@ Transaction fraud detection using ensemble methods.
 - **Latency**: <50ms per prediction
 
 ### 3. Sales Forecasting
+
 Time-series forecasting combining Prophet with LightGBM.
 
 - **Model**: Prophet + LightGBM hybrid
@@ -107,6 +112,7 @@ Time-series forecasting combining Prophet with LightGBM.
 - **Features**: Seasonality, holidays
 
 ### 4. DNA Similarity Analysis
+
 Sequence analysis using custom similarity algorithms.
 
 - **Model**: K-NN with custom distance metrics
@@ -114,6 +120,7 @@ Sequence analysis using custom similarity algorithms.
 - **Features**: GC content, motif search
 
 ### 5. AI Functions (SQL-native generative AI)
+
 Brings SingleStore-style `AI_COMPLETE` / `AI_SENTIMENT` / `AI_TRANSLATE` /
 `EMBED_TEXT` / `AI_SUMMARIZE` / `AI_CLASSIFY` / `AI_EXTRACT` primitives into
 IRIS as IntegratedML Custom Models. Each AI Function is a self-contained
@@ -125,6 +132,7 @@ IRIS as IntegratedML Custom Models. Each AI Function is a self-contained
 - See [demos/ai_functions/README.md](demos/ai_functions/README.md)
 
 ### 6. TabPFN-3 Tabular Foundation Model
+
 Wraps Prior Labs' [TabPFN-3](https://priorlabs.ai/technical-reports/tabpfn-3)
 — a transformer foundation model that performs in-context learning on
 tabular data — as IRIS IntegratedML Custom Models.
@@ -183,7 +191,9 @@ make demo-tabpfn
 This project's documentation is organized into three main areas:
 
 ### 🔶 EAP Documentation (Start Here!)
+
 Essential guides for Early Access Program participants:
+
 - **[EAP Guide](docs/EAP_GUIDE.md)** - Program overview, timeline, feedback channels
 - **[Installation Guide](docs/INSTALLATION.md)** - Platform-specific setup (macOS primary, Linux/Windows secondary)
 - **[Known Issues](docs/EAP_KNOWN_ISSUES.md)** - Current limitations and workarounds
@@ -192,7 +202,9 @@ Essential guides for Early Access Program participants:
 - **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
 
 ### 📚 Core Documentation ([`docs/`](docs/))
+
 Cross-cutting technical documentation for the entire project:
+
 - **[Quick Start Guide](docs/QUICK_GUIDE_CUSTOM_MODELS.md)** - Get started in under 5 minutes
 - **[User Guide](docs/user_guide.md)** - Step-by-step usage instructions
 - **[Architecture](docs/architecture.md)** - System design, base class hierarchy, integration patterns
@@ -200,21 +212,26 @@ Cross-cutting technical documentation for the entire project:
 - **[Deployment](docs/deployment.md)** - Production deployment strategies and configuration
 
 ### 🎯 Demo Applications ([`demos/`](demos/))
+
 Working examples with demo-specific setup instructions:
+
 - **[Credit Risk](demos/credit_risk/)** - Financial risk modeling with custom feature engineering
 - **[Fraud Detection](demos/fraud_detection/)** - Transaction fraud detection using ensemble methods
 - **[Sales Forecasting](demos/sales_forecasting/)** - Time-series forecasting with Prophet + LightGBM
 - **[DNA Similarity](demos/dna_similarity/)** - Sequence analysis with custom distance metrics
+- **[Gaia Variable Stars](demos/gaia_variable_stars/)** - Astronomical variability detection from Gaia DR3 data ([InterSystems Programming Challenge #1](https://openexchange.intersystems.com))
 
 ### 📋 Feature Specifications ([`specs/`](specs/))
+
 Design documents and implementation plans for new features:
+
 - Feature specifications with user stories and acceptance criteria
 - Implementation plans with architecture decisions
 - Task breakdowns and validation results
 
 ## Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                        SQL Interface                         │
 │  CREATE MODEL | TRAIN MODEL | VALIDATE | PREDICT()          │
@@ -248,24 +265,25 @@ pytest demos/fraud_detection/tests/ -v
 
 ### Test Results (Latest)
 
-| Demo | Data Volume | Training Time | Performance |
-|------|-------------|---------------|-------------|
-| Credit Risk | 10,000 records | 2.3s | 100% accuracy |
-| Fraud Detection | 25,000 transactions | 11.7s | 192 flagged |
-| Sales Forecasting | 365 days × 5 stores | 0.4s | 26.9% MAPE |
-| DNA Similarity | 5,000 sequences | 1.7s | 50.5% accuracy |
+| Demo              | Data Volume         | Training Time | Performance    |
+| ----------------- | ------------------- | ------------- | -------------- |
+| Credit Risk       | 10,000 records      | 2.3s          | 100% accuracy  |
+| Fraud Detection   | 25,000 transactions | 11.7s         | 192 flagged    |
+| Sales Forecasting | 365 days × 5 stores | 0.4s          | 26.9% MAPE     |
+| DNA Similarity    | 5,000 sequences     | 1.7s          | 50.5% accuracy |
 
 ## Development
 
 ### Project Structure
 
-```
+```text
 integratedml-custom-models/
 ├── demos/                    # Demo applications
 │   ├── credit_risk/         # Credit risk assessment
 │   ├── fraud_detection/     # Fraud detection system
 │   ├── sales_forecasting/   # Time series forecasting
-│   └── dna_similarity/      # DNA sequence analysis
+│   ├── dna_similarity/      # DNA sequence analysis
+│   └── gaia_variable_stars/ # Gaia DR3 variable star detection (contest)
 ├── shared/                  # Shared components
 │   ├── models/             # Base model classes
 │   ├── database/           # IRIS connection utilities
@@ -293,7 +311,7 @@ class MyCustomModel(IntegratedMLBaseModel):
         pass
 ```
 
-2. Deploy to IRIS:
+1. Deploy to IRIS:
 
 ```sql
 CREATE MODEL MyModel
