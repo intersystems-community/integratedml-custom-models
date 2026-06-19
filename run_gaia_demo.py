@@ -60,10 +60,17 @@ def fetch_gaia(ra: float, dec: float, radius: float, limit: int) -> pd.DataFrame
     ORDER BY phot_g_mean_mag ASC
     """
     log.info(f"Querying Gaia DR3: center=({ra},{dec}) radius={radius}deg limit={limit}")
-    job = Gaia.launch_job_async(query, verbose=False)
-    df = job.get_results().to_pandas()
-    log.info(f"Fetched {len(df)} sources")
-    return df
+    for attempt in range(1, 4):
+        try:
+            job = Gaia.launch_job_async(query, verbose=False)
+            df = job.get_results().to_pandas()
+            log.info(f"Fetched {len(df)} sources")
+            return df
+        except Exception as e:
+            if attempt == 3:
+                raise
+            log.warning(f"Gaia query attempt {attempt} failed ({e}), retrying...")
+            import time; time.sleep(10 * attempt)
 
 
 def compute_variability(df: pd.DataFrame, threshold_pct: float) -> pd.DataFrame:
@@ -87,7 +94,7 @@ DDL_STATS = """
     CREATE TABLE GaiaObservationStats (
         source_id  BIGINT PRIMARY KEY,
         ra         DOUBLE,
-        dec        DOUBLE,
+        "dec"      DOUBLE,
         mean_mag   DOUBLE,
         std_mag    DOUBLE,
         min_mag    DOUBLE,
@@ -161,7 +168,7 @@ def query_results(conn, threshold_pct: float) -> pd.DataFrame:
         SELECT
             source_id,
             ra,
-            dec,
+            "dec",
             min_mag   AS phot_g_mean_mag_min,
             max_mag   AS phot_g_mean_mag_max,
             ROUND((mag_range / mean_mag) * 100.0, 4) AS pct_change

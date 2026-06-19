@@ -203,45 +203,29 @@ class with `fit` / `predict` / `predict_proba` that IRIS's embedded Python
 interpreter (`irispython`) loads at `TRAIN MODEL` time:
 
 ```python
-import numpy as np
 from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import Pipeline
 
 
 class IRISModel:
-    name = "gaia_variability_detector"
-
-    def __init__(self, threshold_pct=10.0, **kwargs):
-        self.threshold_pct = float(threshold_pct)
-        self._pipeline = Pipeline([
-            ("scaler", StandardScaler()),
-            ("clf", GradientBoostingClassifier(
-                n_estimators=100, max_depth=3, learning_rate=0.1, random_state=42
-            )),
-        ])
-
-    def _features(self, X):
-        X = np.asarray(X, dtype=float)
-        mean_mag, std_mag, n_obs, mag_range = X[:,0], X[:,1], X[:,4], X[:,5]
-        cv   = std_mag / (np.abs(mean_mag) + 1e-9)
-        rom  = mag_range / (np.abs(mean_mag) + 1e-9)
-        logn = np.log1p(n_obs)
-        return np.column_stack([X, cv, rom, logn])
-
-    def fit(self, X, y, **kwargs):
-        self._pipeline.fit(self._features(X), y)
-        return self
-
-    def predict(self, X):
-        return self._pipeline.predict(self._features(X))
+    def __init__(self, **kwargs):
+        self.name = "gaia_variability_detector"
+        self.model_type = "Gradient Boosting"
+        self.package = "sklearn"
+        self.model = GradientBoostingClassifier(
+            n_estimators=int(kwargs.get("n_estimators", 100)),
+            max_depth=int(kwargs.get("max_depth", 3)),
+            learning_rate=float(kwargs.get("learning_rate", 0.1)),
+            random_state=kwargs.get("random_state", 42),
+        )
 ```
 
-The contract is intentionally minimal — just `fit`, `predict`, and a `name`
-string. IRIS's
+The contract: `IRISModel.__init__(**kwargs)` must set `self.model` to a
+scikit-learn-compatible estimator and `self.name` to a unique string. IRIS's
 [Embedded Python](https://docs.intersystems.com/irislatest/csp/docbook/DocBook.UI.Page.cls?KEY=GEPYTHON)
-runtime (`irispython`) loads the file at `TRAIN MODEL` time, runs `fit`, then
-serializes the trained model state for later `PREDICT()` calls in SQL.
+runtime loads the file at `TRAIN MODEL` time, calls `self.model.fit(X, y)`
+directly (after its own feature pre-processing), then serializes the result
+for later `PREDICT()` calls in SQL. `kwargs` receives `random_state`, `n_jobs`,
+and any `userparams` from the `USING` clause JSON.
 
 A few gotchas that catch new users of Embedded Python and IntegratedML Custom
 Models:

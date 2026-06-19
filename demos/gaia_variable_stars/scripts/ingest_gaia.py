@@ -47,7 +47,7 @@ DDL_SOURCES = """
 CREATE TABLE IF NOT EXISTS GaiaSources (
     source_id    BIGINT       PRIMARY KEY,
     ra           DOUBLE,
-    dec          DOUBLE,
+    "dec"        DOUBLE,
     mean_mag     DOUBLE,
     mag_err      DOUBLE,
     n_obs        INT,
@@ -59,7 +59,7 @@ DDL_STATS = """
 CREATE TABLE IF NOT EXISTS GaiaObservationStats (
     source_id    BIGINT       PRIMARY KEY,
     ra           DOUBLE,
-    dec          DOUBLE,
+    "dec"        DOUBLE,
     mean_mag     DOUBLE,
     std_mag      DOUBLE,
     min_mag      DOUBLE,
