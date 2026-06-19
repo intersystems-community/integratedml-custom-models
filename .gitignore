@@ -247,3 +247,16 @@ notebooks/
 !demos/fraud_detection/notebooks/01_Fraud_Detection_Complete_Demo.ipynb
 !demos/sales_forecasting/notebooks/01_Sales_Forecasting_Complete_Demo.ipynb
 !demos/dna_similarity/notebooks/01_DNA_Similarity_Complete_Demo.ipynb
+
+# AI Functions demo: generated per-model staging directories.
+demos/ai_functions/iris_models/_staging/
+
+# AI Functions demo: keep the small sample CSVs that ship with the demo
+# even though *.csv is globally ignored above.
+!demos/ai_functions/data/*.csv
+
+# TabPFN-3 demo: generated per-model staging directories.
+demos/tabpfn_foundation/iris_models/_staging/
+
+# TabPFN-3 demo: keep the small sample CSVs that ship with the demo.
+!demos/tabpfn_foundation/data/*.csv

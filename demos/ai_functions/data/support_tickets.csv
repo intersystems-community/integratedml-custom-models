@@ -1,0 +1,16 @@
+ticket_id,message_text,department
+1,"My credit card was charged twice for the same monthly subscription. Please refund the duplicate charge immediately.",billing
+2,"The mobile app crashes every time I try to upload a profile picture. I've tried reinstalling.",technical
+3,"I'd like to upgrade my account from the Pro plan to the Enterprise tier. Can someone send me a quote?",sales
+4,"Received the wrong size shirt in my order. I need to return it and get the correct one shipped.",returns
+5,"I cannot log in. The password reset email never arrives even though I've checked spam.",technical
+6,"Why was I billed an extra $50 this month? I don't recognize that line item on my invoice.",billing
+7,"Can you tell me about volume discounts for purchasing 200 licenses for our company?",sales
+8,"The package arrived damaged. The product is broken. I'd like an exchange.",returns
+9,"My dashboard keeps showing a 500 error when I navigate to the analytics page.",technical
+10,"Please cancel my subscription and refund the unused portion of the year.",billing
+11,"Looking for a product demo before we commit to an annual contract.",sales
+12,"The hat doesn't fit and is the wrong color. How do I return it?",returns
+13,"Server timeouts whenever I try to export a CSV report. The button just spins.",technical
+14,"Could you send me an itemized invoice for last quarter? I need it for accounting.",billing
+15,"Is there an educational discount available for nonprofit organizations?",sales
