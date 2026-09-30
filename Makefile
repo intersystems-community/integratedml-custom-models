@@ -112,6 +112,10 @@ demo-tabpfn:
 	@echo "🧠 Running TabPFN-3 foundation-model demo (classification + regression)..."
 	python run_tabpfn_demo.py
 
+demo-tabfm:
+	@echo "🔷 Running TabFM (Google) zero-shot foundation-model demo (classification + regression)..."
+	python run_tabfm_demo.py
+
 # Quick demo runner
 demos: start
 	@echo "🎬 Running all demos..."
@@ -121,6 +125,7 @@ demos: start
 	@$(MAKE) demo-dna
 	@$(MAKE) demo-ai-functions
 	@$(MAKE) demo-tabpfn
+	@$(MAKE) demo-tabfm
 	@echo "✅ All demos completed!"
 
 # Status check
