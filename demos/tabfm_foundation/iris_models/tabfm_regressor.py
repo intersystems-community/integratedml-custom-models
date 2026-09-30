@@ -35,6 +35,7 @@ from typing import Any, List, Optional
 
 import numpy as np
 import pandas as pd
+from sklearn.base import BaseEstimator, RegressorMixin
 
 
 def _try_import_tabfm():
@@ -60,6 +61,9 @@ def _try_import_tabfm():
 def _to_dataframe(X) -> pd.DataFrame:
     if isinstance(X, pd.DataFrame):
         return X
+    if hasattr(X, "toarray"):
+        # IntegratedML's AutoML data prep passes scipy sparse matrices.
+        X = X.toarray()
     arr = np.asarray(X)
     if arr.ndim == 1:
         arr = arr.reshape(-1, 1)
@@ -99,7 +103,7 @@ class _SklearnFallback:
         return self.model.predict(X)
 
 
-class IRISModel:
+class IRISModel(RegressorMixin, BaseEstimator):
     """TabFM regressor (with sklearn fallback)."""
 
     name = "tabfm_regressor"

@@ -77,6 +77,23 @@ def test_handles_categorical_hvac_type(energy_data):
     assert np.isfinite(preds).all()
 
 
+def test_accepts_scipy_sparse_input(energy_data):
+    # IntegratedML's AutoML provider hands custom models scipy sparse matrices.
+    import scipy.sparse
+    from sklearn.base import clone, is_regressor
+
+    df, feature_cols = energy_data
+    num_cols = [c for c in feature_cols if c != "hvac_type"]
+    X_train, y_train, X_test, _ = _train_test_split(df, num_cols)
+    model = IRISModel(force_fallback=True)
+    assert is_regressor(model)
+    clone(model).fit(scipy.sparse.csr_matrix(X_train.to_numpy()), y_train)
+    model.fit(scipy.sparse.csr_matrix(X_train.to_numpy()), y_train)
+    preds = model.predict(scipy.sparse.csr_matrix(X_test.to_numpy()))
+    assert preds.shape == (len(X_test),)
+    assert np.isfinite(preds).all()
+
+
 @pytest.mark.requires_tabfm
 def test_tabfm_backend_when_installed(energy_data):
     df, feature_cols = energy_data

@@ -94,6 +94,22 @@ def test_handles_categorical_sex_column(patient_data):
     assert np.isfinite(preds.astype(float)).all()
 
 
+def test_accepts_scipy_sparse_input(patient_data):
+    # IntegratedML's AutoML provider hands custom models scipy sparse matrices.
+    import scipy.sparse
+    from sklearn.base import clone, is_classifier
+
+    df, feature_cols = patient_data
+    num_cols = [c for c in feature_cols if c != "sex"]
+    X_train, y_train, X_test, _ = _train_test_split(df, num_cols)
+    model = IRISModel(force_fallback=True)
+    assert is_classifier(model)
+    clone(model).fit(scipy.sparse.csr_matrix(X_train.to_numpy()), y_train)
+    model.fit(scipy.sparse.csr_matrix(X_train.to_numpy()), y_train)
+    proba = model.predict_proba(scipy.sparse.csr_matrix(X_test.to_numpy()))
+    assert proba.shape == (len(X_test), 2)
+
+
 @pytest.mark.requires_tabfm
 def test_tabfm_backend_when_installed(patient_data):
     df, feature_cols = patient_data

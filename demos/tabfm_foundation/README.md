@@ -77,11 +77,18 @@ Things to know:
 * **Context size** — TabFM defaults to `max_num_rows=100` in-context rows and
   `max_num_features=500`. This wrapper raises rows to 1000; larger tables need
   sampling or splitting. Both are settable via `userparams`.
-* **IRIS run status** — `CREATE MODEL` parses and registers against IRIS
-  2026.1 (`intersystemsdc/iris-community`), but `TRAIN MODEL` needs the AutoML
-  provider (`intersystems-iris-automl` from `registry.intersystems.com`),
-  which I could not install from the restricted sandbox. `TRAIN`/`PREDICT()`
-  from SQL is therefore not yet verified end to end.
+* **IRIS run status** — verified end to end on IRIS 2026.1
+  (`intersystemsdc/iris-community`) with `intersystems-iris-automl` 1.0.3:
+  `CREATE MODEL`, `TRAIN MODEL`, `PREDICT()` and every query in
+  `sql/03_evaluation.sql` run. That run used the sklearn fallback, since
+  `tabfm` was not installed in IRIS.
+* **AutoML feature selection** — before calling the custom model, the AutoML
+  provider always drops features with `SelectFpr(alpha=0.2)` and its default
+  `f_classif` test, and USING offers no switch to turn this off. On the test
+  split this cost accuracy on the classifier (in IRIS 0.747, 23→8 features;
+  local, all features, 0.800) and much more on the regressor, where
+  `f_classif` is a poor fit for a continuous target (19→5 features, leaving
+  mostly `hvac_type`: in IRIS MAE 128.9 kWh/day; local 30.9).
 * **Verification** — this wrapper was written from the public repo README. The
   sandbox it was built in couldn't install TabFM, so the real-backend path is
   covered by a stubbed-package unit test, and the `requires_tabfm` tests run
@@ -90,13 +97,51 @@ Things to know:
 
 ## Deploying to IRIS
 
+The SQL expects the repo mounted at `/opt/irisapp`. That is the image's
+working directory, and `/iris-main` writes its log there, so run from a
+different working directory:
+
 ```bash
+docker run -d --name iris -w /home/irisowner --entrypoint /iris-main \
+    -p 1972:1972 -p 52773:52773 -v "$PWD":/opt/irisapp \
+    intersystemsdc/iris-community
+
+# AutoML provider for TRAIN MODEL, installed into IRIS's Python path
+docker exec iris /usr/irissys/bin/irispython -m pip install \
+    --index-url https://registry.intersystems.com/pypi/simple \
+    --extra-index-url https://pypi.org/simple \
+    --target /usr/irissys/mgr/python intersystems-iris-automl
+# (If the container has no outbound access, `pip download` the same package
+#  on the host for Python 3.12 and install with --no-index --find-links.)
+
 python demos/tabfm_foundation/scripts/deploy_models.py
-iris session iris -U USER < demos/tabfm_foundation/sql/01_setup_tables.sql
-# load the CSVs from data/, then:
+
+# PREDICT() unpickles the trained model in a new process, and AutoML doesn't
+# put pathtoclassifiers back on sys.path there. Put the wrapper modules
+# somewhere IRIS always imports from (repeat after editing them):
+docker exec iris cp \
+    /opt/irisapp/demos/tabfm_foundation/iris_models/tabfm_classifier.py \
+    /opt/irisapp/demos/tabfm_foundation/iris_models/tabfm_regressor.py \
+    /usr/irissys/mgr/python/
+
+# Embedded Python needs %Service_CallIn enabled (OS + password auth)
+docker exec -i iris iris session IRIS -U %SYS <<'EOF'
+set p("Enabled")=1,p("AutheEnabled")=48 write ##class(Security.Services).Modify("%Service_CallIn",.p)
+halt
+EOF
+
+# create tables + load the CSVs
+docker exec -e IRISNAMESPACE=USER iris /usr/irissys/bin/irispython \
+    /opt/irisapp/demos/tabfm_foundation/scripts/load_data.py
+
+# then run:
 #   sql/02_create_models.sql   -- CREATE / TRAIN models, sample predictions
 #   sql/03_evaluation.sql      -- accuracy / error queries
 ```
+
+`load_data.py` assigns the `split` column with the same seeded 75/25 shuffle
+as `run_tabfm_demo.py`, so SQL results are directly comparable with the local
+demo.
 
 ## TabFM vs TabPFN
 

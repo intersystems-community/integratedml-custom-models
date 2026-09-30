@@ -50,12 +50,16 @@ SELECT
 FROM pred;
 
 -- Largest absolute errors — useful for inspecting outliers / model failures.
-SELECT
-    building_id, floor_area, occupants, hvac_type, outdoor_temp_c,
-    insulation_rating, kwh_day AS actual,
-    PREDICT(BuildingEnergyForecaster) AS predicted,
-    ABS(kwh_day - PREDICT(BuildingEnergyForecaster)) AS abs_error
-FROM TabFM.BuildingEnergy
-WHERE split = 'test'
-ORDER BY ABS(kwh_day - PREDICT(BuildingEnergyForecaster)) DESC
-FETCH FIRST 10 ROWS ONLY;
+-- (IRIS 2026.1 fails to compile ORDER BY on a PREDICT() expression combined
+-- with FETCH FIRST, so sort a derived table with TOP instead.)
+SELECT TOP 10 *
+FROM (
+    SELECT
+        building_id, floor_area, occupants, hvac_type, outdoor_temp_c,
+        insulation_rating, kwh_day AS actual,
+        PREDICT(BuildingEnergyForecaster) AS predicted,
+        ABS(kwh_day - PREDICT(BuildingEnergyForecaster)) AS abs_error
+    FROM TabFM.BuildingEnergy
+    WHERE split = 'test'
+) errors
+ORDER BY abs_error DESC;
