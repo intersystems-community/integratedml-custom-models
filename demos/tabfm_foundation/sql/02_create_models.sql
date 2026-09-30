@@ -16,7 +16,12 @@
 DROP MODEL IF EXISTS PatientRiskScreener;
 CREATE MODEL PatientRiskScreener
 PREDICTING (needs_followup)
-FROM TabFM.PatientScreening
+FROM (
+    SELECT age, sex, bmi, systolic_bp, diastolic_bp, fasting_glucose, hdl, ldl,
+           smoker, family_history, exercise_days, needs_followup
+    FROM TabFM.PatientScreening
+    WHERE split = 'train'
+)
 USING {
     "pathtoclassifiers": "/opt/irisapp/demos/tabfm_foundation/iris_models/_staging/tabfm_classifier",
     "iscmodelsdisabled": 1,
@@ -24,8 +29,7 @@ USING {
         "n_estimators": 4,
         "max_num_rows": 1000
     }
-}
-WHERE split = 'train';
+};
 TRAIN MODEL PatientRiskScreener;
 
 -- Predictions on the held-out split.
@@ -46,7 +50,12 @@ ORDER BY patient_id;
 DROP MODEL IF EXISTS BuildingEnergyForecaster;
 CREATE MODEL BuildingEnergyForecaster
 PREDICTING (kwh_day)
-FROM TabFM.BuildingEnergy
+FROM (
+    SELECT floor_area, occupants, hvac_type, outdoor_temp_c, insulation_rating,
+           is_weekend, month, appliance_density, kwh_day
+    FROM TabFM.BuildingEnergy
+    WHERE split = 'train'
+)
 USING {
     "pathtoregressors": "/opt/irisapp/demos/tabfm_foundation/iris_models/_staging/tabfm_regressor",
     "iscmodelsdisabled": 1,
@@ -54,8 +63,7 @@ USING {
         "n_estimators": 4,
         "max_num_rows": 1000
     }
-}
-WHERE split = 'train';
+};
 TRAIN MODEL BuildingEnergyForecaster;
 
 -- Predictions + residuals on the held-out split.

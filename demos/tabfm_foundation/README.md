@@ -18,13 +18,14 @@ call it from IRIS SQL:
 
 ```sql
 CREATE MODEL PatientRiskScreener PREDICTING (needs_followup)
-FROM TabFM.PatientScreening
+FROM (SELECT age, sex, bmi, systolic_bp, diastolic_bp, fasting_glucose, hdl, ldl,
+             smoker, family_history, exercise_days, needs_followup
+      FROM TabFM.PatientScreening WHERE split = 'train')
 USING {
     "pathtoclassifiers": "/opt/irisapp/demos/tabfm_foundation/iris_models/_staging/tabfm_classifier",
     "iscmodelsdisabled": 1,
     "userparams": {"n_estimators": 4, "max_num_rows": 1000}
-}
-WHERE split = 'train';
+};
 TRAIN MODEL PatientRiskScreener;
 
 SELECT patient_id, PREDICT(PatientRiskScreener) AS needs_followup
@@ -76,6 +77,11 @@ Things to know:
 * **Context size** — TabFM defaults to `max_num_rows=100` in-context rows and
   `max_num_features=500`. This wrapper raises rows to 1000; larger tables need
   sampling or splitting. Both are settable via `userparams`.
+* **IRIS run status** — `CREATE MODEL` parses and registers against IRIS
+  2026.1 (`intersystemsdc/iris-community`), but `TRAIN MODEL` needs the AutoML
+  provider (`intersystems-iris-automl` from `registry.intersystems.com`),
+  which I could not install from the restricted sandbox. `TRAIN`/`PREDICT()`
+  from SQL is therefore not yet verified end to end.
 * **Verification** — this wrapper was written from the public repo README. The
   sandbox it was built in couldn't install TabFM, so the real-backend path is
   covered by a stubbed-package unit test, and the `requires_tabfm` tests run
