@@ -263,3 +263,5 @@ demos/kumo_tabular_foundation/iris_models/_staging/
 
 # TabPFN-3 demo: keep the small sample CSVs that ship with the demo.
 !demos/tabpfn_foundation/data/*.csv
+!demos/tabfm_foundation/data/*.csv
+!demos/kumo_tabular_foundation/data/*.csv
