@@ -116,6 +116,10 @@ demo-tabfm:
 	@echo "🔷 Running TabFM (Google) zero-shot foundation-model demo (classification + regression)..."
 	python run_tabfm_demo.py
 
+demo-kumo:
+	@echo "🟩 Running NVIDIA Kumo Tabular foundation-model demo (classification + regression)..."
+	python run_kumo_tabular_demo.py
+
 # Quick demo runner
 demos: start
 	@echo "🎬 Running all demos..."
@@ -126,6 +130,7 @@ demos: start
 	@$(MAKE) demo-ai-functions
 	@$(MAKE) demo-tabpfn
 	@$(MAKE) demo-tabfm
+	@$(MAKE) demo-kumo
 	@echo "✅ All demos completed!"
 
 # Status check

@@ -134,6 +134,25 @@ tabular data — as IRIS IntegratedML Custom Models.
 - **Use cases**: patient risk screening (classification), building energy consumption (regression)
 - See [demos/tabpfn_foundation/README.md](demos/tabpfn_foundation/README.md)
 
+### 7. TabFM Zero-Shot Foundation Model
+Wraps Google Research's TabFM, a zero-shot tabular foundation model, as IRIS
+IntegratedML Custom Models, on the same datasets as the TabPFN demo.
+
+- **Models**: TabFM classifier and regressor IRISModels
+- **Backend**: `tabfm` (github.com/google-research/tabfm), with scikit-learn `GradientBoosting` fallback
+- **Status**: `TRAIN MODEL` / `PREDICT()` verified in IRIS 2026.1 with the fallback
+- See [demos/tabfm_foundation/README.md](demos/tabfm_foundation/README.md)
+
+### 8. NVIDIA Kumo Tabular Foundation Model
+Wraps NVIDIA's [Kumo Tabular](https://huggingface.co/blog/nvidia/kumo-tabular)
+(in-context classification and regression, 28M–215M parameters) as IRIS
+IntegratedML Custom Models, on the same datasets as the TabPFN and TabFM demos.
+
+- **Models**: Kumo Tabular classifier and regressor IRISModels
+- **Backend**: NVIDIA `structured-data-models` (`sdm`), with scikit-learn `GradientBoosting` fallback
+- **Status**: `TRAIN MODEL` / `PREDICT()` verified in IRIS 2026.1 with the fallback; the real backend is not yet run
+- See [demos/kumo_tabular_foundation/README.md](demos/kumo_tabular_foundation/README.md)
+
 ## Quick Start
 
 ### Prerequisites
@@ -176,6 +195,12 @@ make demo-ai-functions
 
 # TabPFN-3 (tabular foundation model)
 make demo-tabpfn
+
+# TabFM (Google zero-shot tabular foundation model)
+make demo-tabfm
+
+# Kumo Tabular (NVIDIA tabular foundation model)
+make demo-kumo
 ```
 
 ## Documentation
