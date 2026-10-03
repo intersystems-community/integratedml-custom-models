@@ -66,7 +66,7 @@ notebooks:
 
 test:
 	@echo "🧪 Running tests..."
-	@pytest demos/*/tests/ -v --tb=short
+	@pytest demos/*/tests/ scripts/automl_keep_features/tests/ -v --tb=short
 	@echo "✅ Tests completed"
 
 format:

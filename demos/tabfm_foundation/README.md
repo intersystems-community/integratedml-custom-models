@@ -88,7 +88,10 @@ Things to know:
   split this cost accuracy on the classifier (in IRIS 0.747, 23→8 features;
   local, all features, 0.800) and much more on the regressor, where
   `f_classif` is a poor fit for a continuous target (19→5 features, leaving
-  mostly `hvac_type`: in IRIS MAE 128.9 kWh/day; local 30.9).
+  mostly `hvac_type`: in IRIS MAE 128.9 kWh/day; local 30.9). The
+  [keep-all-features patch](../../scripts/automl_keep_features/README.md)
+  turns this step off; with it, IRIS gives accuracy 0.800 and MAE
+  28.7 kWh/day, in line with the local all-feature run.
 * **Verification** — this wrapper was written from the public repo README. The
   sandbox it was built in couldn't install TabFM, so the real-backend path is
   covered by a stubbed-package unit test, and the `requires_tabfm` tests run
@@ -129,6 +132,11 @@ docker exec -i iris iris session IRIS -U %SYS <<'EOF'
 set p("Enabled")=1,p("AutheEnabled")=48 write ##class(Security.Services).Modify("%Service_CallIn",.p)
 halt
 EOF
+
+# Optional, recommended: stop AutoML from dropping features before the
+# model sees them (affects every AutoML model in the instance)
+docker exec iris /usr/irissys/bin/irispython \
+    /opt/irisapp/scripts/automl_keep_features/install.py
 
 # create tables + load the CSVs
 docker exec -e IRISNAMESPACE=USER iris /usr/irissys/bin/irispython \

@@ -153,6 +153,11 @@ IntegratedML Custom Models, on the same datasets as the TabPFN and TabFM demos.
 - **Status**: `TRAIN MODEL` / `PREDICT()` verified in IRIS 2026.1 with the fallback; the real backend is not yet run
 - See [demos/kumo_tabular_foundation/README.md](demos/kumo_tabular_foundation/README.md)
 
+**AutoML keep-all-features patch**: AutoML drops features before Custom
+Models see them, which hurts the foundation-model demos (most of all on
+regression). [scripts/automl_keep_features](scripts/automl_keep_features/README.md)
+turns that step off without modifying or copying AutoML's code.
+
 ## Quick Start
 
 ### Prerequisites

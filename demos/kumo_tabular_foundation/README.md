@@ -112,17 +112,20 @@ Verified on IRIS 2026.1 (`intersystemsdc/iris-community`) with
 
 On the 75-row test split:
 
-| Model      | In IRIS (fallback)            | Local, all features (fallback) |
-|------------|-------------------------------|--------------------------------|
-| Classifier | accuracy 0.787                | accuracy 0.800, AUC 0.827      |
-| Regressor  | MAE 128.9 kWh/day             | MAE 29.0 kWh/day, R² 0.941     |
+| Model      | In IRIS, AutoML default | In IRIS, keep-all-features patch | Local, all features        |
+|------------|-------------------------|----------------------------------|----------------------------|
+| Classifier | accuracy 0.787          | accuracy 0.800                   | accuracy 0.800, AUC 0.827  |
+| Regressor  | MAE 128.9 kWh/day       | MAE 28.7 kWh/day                 | MAE 29.0 kWh/day, R² 0.941 |
 
-The gap comes from the AutoML provider, not the wrapper. Before calling the
-custom model, AutoML always drops features with `SelectFpr(alpha=0.2)` and its
-default `f_classif` test, and `USING` offers no switch to turn this off. The
-classifier keeps 8 of 23 features; the regressor keeps 5 of 19, mostly
-`hvac_type`, because `f_classif` suits a continuous target poorly. The
-[TabFM demo](../tabfm_foundation/README.md) shows the same pattern.
+With AutoML's defaults the gap comes from the provider, not the wrapper.
+Before calling the custom model, AutoML always drops features with
+`SelectFpr(alpha=0.2)` and its default `f_classif` test, and `USING` offers
+no switch to turn this off. The classifier keeps 8 of 23 features; the
+regressor keeps 5 of 19, mostly `hvac_type`, because `f_classif` suits a
+continuous target poorly. The
+[keep-all-features patch](../../scripts/automl_keep_features/README.md)
+turns that step off for the whole instance, which brings the IRIS results in
+line with the local run.
 
 Running the wrapper under AutoML also showed what an `IRISModel` needs there,
 all built into these wrappers and covered by tests:
@@ -165,6 +168,11 @@ docker exec -i iris iris session IRIS -U %SYS <<'EOF'
 set p("Enabled")=1,p("AutheEnabled")=48 write ##class(Security.Services).Modify("%Service_CallIn",.p)
 halt
 EOF
+
+# Optional, recommended: stop AutoML from dropping features before the
+# model sees them (affects every AutoML model in the instance)
+docker exec iris /usr/irissys/bin/irispython \
+    /opt/irisapp/scripts/automl_keep_features/install.py
 
 # create tables + load the CSVs
 docker exec -e IRISNAMESPACE=USER iris /usr/irissys/bin/irispython \
