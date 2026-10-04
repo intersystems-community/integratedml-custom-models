@@ -2,8 +2,9 @@
 
 Two modes, chosen by `connect(mode="auto")`:
 
-* ``dbapi``: the `intersystems-irispython` driver over the superserver port
-  (default 1972), the way a notebook or app connects. Settings come from
+* ``dbapi``: `iris.dbapi.connect(...)` from the `intersystems-irispython`
+  package, as documented on PyPI, over the superserver port (default 1972),
+  the way a notebook or app connects. Settings come from
   arguments or the IRIS_HOST, IRIS_PORT, IRIS_NAMESPACE, IRIS_USERNAME and
   IRIS_PASSWORD environment variables (defaults localhost, 1972, USER, demo,
   demo).
@@ -35,20 +36,22 @@ class DbapiExecutor:
 
     def __init__(self, host=None, port=None, namespace=None, user=None,
                  password=None):
-        import iris
+        # DB-API entry point as documented for intersystems-irispython on
+        # PyPI: `import iris.dbapi; iris.dbapi.connect(**args)`. The
+        # top-level `iris.connect` is the Native SDK connection (for
+        # iris.createIRIS), not DB-API.
+        import iris.dbapi
 
-        self.target = (
-            f"{host or os.environ.get('IRIS_HOST', 'localhost')}:"
-            f"{int(port or os.environ.get('IRIS_PORT', 1972))}/"
-            f"{namespace or os.environ.get('IRIS_NAMESPACE', 'USER')}"
-        )
-        self.conn = iris.connect(
-            host or os.environ.get("IRIS_HOST", "localhost"),
-            int(port or os.environ.get("IRIS_PORT", 1972)),
-            namespace or os.environ.get("IRIS_NAMESPACE", "USER"),
-            user or os.environ.get("IRIS_USERNAME", "demo"),
-            password or os.environ.get("IRIS_PASSWORD", "demo"),
-        )
+        self.dbapi = iris.dbapi
+        args = {
+            "hostname": host or os.environ.get("IRIS_HOST", "localhost"),
+            "port": int(port or os.environ.get("IRIS_PORT", 1972)),
+            "namespace": namespace or os.environ.get("IRIS_NAMESPACE", "USER"),
+            "username": user or os.environ.get("IRIS_USERNAME", "demo"),
+            "password": password or os.environ.get("IRIS_PASSWORD", "demo"),
+        }
+        self.target = f"{args['hostname']}:{args['port']}/{args['namespace']}"
+        self.conn = iris.dbapi.connect(**args)
 
     def execute(self, sql: str, params: Sequence[Any] = ()) -> Result:
         cur = self.conn.cursor()
@@ -57,8 +60,8 @@ class DbapiExecutor:
             if not cur.description:
                 return None
             columns = [d[0] for d in cur.description]
-            return columns, [list(row) for row in cur.fetchall()]
-        except Exception as exc:
+            return columns, [list(row[:]) for row in cur.fetchall()]
+        except self.dbapi.Error as exc:
             raise SQLError(str(exc)) from exc
         finally:
             cur.close()

@@ -7,9 +7,11 @@
 #       -- /iris-main --after /opt/irisapp/docker/iris-after-start.sh
 #
 # The image's own /docker-entrypoint.sh exits with status 1 on IRIS 2026.1:
-# its namespace setup runs `irispython -m irissqlcli`, which calls
-# iris.dbapi.connect, and the embedded `iris` module has no dbapi. This
-# script does the parts of that setup the demos need, without irissqlcli:
+# its namespace setup runs `irispython -m irissqlcli`, which needs
+# iris.dbapi from the intersystems-irispython package, and that package isn't
+# installed in IRIS's Python (there `import iris` is the embedded module,
+# without dbapi). This script does the parts of that setup the demos need,
+# without irissqlcli:
 #
 #   1. enable %Service_CallIn (OS + password auth), needed by embedded Python
 #   2. create or update the IRIS_USERNAME login with IRIS_PASSWORD, if set,

@@ -24,10 +24,14 @@ Why each part is there:
 
 * **`/iris-main` instead of the image's entrypoint.** The image's
   `/docker-entrypoint.sh` exits with status 1 on this version. Its namespace
-  setup runs `irispython -m irissqlcli`, which calls `iris.dbapi.connect`,
-  and the embedded `iris` module has no `dbapi` ("Cannot call an
-  iris.package wrapper ... dbapi.connect"). `/tini` stays in front, as in
-  the original entrypoint, to forward signals and reap child processes.
+  setup runs `irispython -m irissqlcli`, which calls
+  `iris.dbapi.connect(mode="embedded", ...)`, the DB-API interface of the
+  `intersystems-irispython` package. That package isn't installed in IRIS's
+  own Python, where `import iris` loads the embedded module from
+  `/usr/irissys/lib/python/iris`, which has no `dbapi` submodule. The call
+  fails with "Cannot call an iris.package wrapper ... dbapi.connect". `/tini`
+  stays in front, as in the original entrypoint, to forward signals and reap
+  child processes.
 * **`-w /home/irisowner`.** The image's working directory is `/opt/irisapp`,
   where the repo is mounted, and `/iris-main` crashes if it can't create
   `iris-main.log` in its working directory.
@@ -87,8 +91,10 @@ docker exec iris cp \
 `scripts/run_sql.py` runs a `.sql` file statement by statement, printing
 OK/FAIL, timings and the first rows of each result, and exits 1 if anything
 failed. `scripts/iris_sql.py` is the connection layer it shares with the
-demos' `load_data.py`. Both connect over **DB-API** from the host
-(`pip install intersystems-irispython`; settings from IRIS_HOST, IRIS_PORT,
+demos' `load_data.py`. Both connect over **DB-API** from the host, using
+`iris.dbapi.connect(...)` as documented for the
+[`intersystems-irispython`](https://pypi.org/project/intersystems-irispython/)
+package (`pip install intersystems-irispython`; settings from IRIS_HOST, IRIS_PORT,
 IRIS_NAMESPACE, IRIS_USERNAME, IRIS_PASSWORD, defaulting to
 `localhost:1972/USER` as `demo`/`demo`), or through **embedded Python** when
 run under `irispython` inside the container.
@@ -117,6 +123,8 @@ AutoML models too, so the custom models are not the cause.
 
 What is known:
 
+* It happens with the documented DB-API connection
+  (`iris.dbapi.connect(...)`) and with the Native SDK `iris.connect(...)`.
 * Training completes: `INFORMATION_SCHEMA.ML_TRAINING_RUNS` shows the run
   as `completed` and the trained model exists.
 * The DB-API server process then exits on its own (`exit_group(0)`, with no
