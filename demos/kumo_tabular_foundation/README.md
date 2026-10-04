@@ -138,49 +138,28 @@ all built into these wrappers and covered by tests:
 
 ## Deploying to IRIS
 
-The SQL expects the repo mounted at `/opt/irisapp`. That is the image's
-working directory, and `/iris-main` writes its log there, so run from a
-different working directory:
+Container setup, the AutoML install, the healthcheck fix and how to run the
+SQL are in [docker/IRIS_COMMUNITY_SETUP.md](../../docker/IRIS_COMMUNITY_SETUP.md).
+With that container running, the steps for this demo are:
 
 ```bash
-docker run -d --name iris -w /home/irisowner --entrypoint /iris-main \
-    -p 1972:1972 -p 52773:52773 -v "$PWD":/opt/irisapp \
-    intersystemsdc/iris-community
-
-# AutoML provider for TRAIN MODEL, installed into IRIS's Python path
-docker exec iris /usr/irissys/bin/irispython -m pip install \
-    --index-url https://registry.intersystems.com/pypi/simple \
-    --extra-index-url https://pypi.org/simple \
-    --target /usr/irissys/mgr/python intersystems-iris-automl
-
 python demos/kumo_tabular_foundation/scripts/deploy_models.py
-
-# PREDICT() unpickles the trained model in a new process, and AutoML doesn't
-# put pathtoclassifiers back on sys.path there. Put the wrapper modules
-# somewhere IRIS always imports from (repeat after editing them):
 docker exec iris cp \
     /opt/irisapp/demos/kumo_tabular_foundation/iris_models/kumo_classifier.py \
     /opt/irisapp/demos/kumo_tabular_foundation/iris_models/kumo_regressor.py \
     /usr/irissys/mgr/python/
 
-# Embedded Python needs %Service_CallIn enabled (OS + password auth)
-docker exec -i iris iris session IRIS -U %SYS <<'EOF'
-set p("Enabled")=1,p("AutheEnabled")=48 write ##class(Security.Services).Modify("%Service_CallIn",.p)
-halt
-EOF
+# create tables + load the CSVs (from the host over DB-API)
+python demos/kumo_tabular_foundation/scripts/load_data.py
 
-# Optional, recommended: stop AutoML from dropping features before the
-# model sees them (affects every AutoML model in the instance)
-docker exec iris /usr/irissys/bin/irispython \
-    /opt/irisapp/scripts/automl_keep_features/install.py
-
-# create tables + load the CSVs
+# CREATE / TRAIN MODEL: run inside the container, because TRAIN MODEL over
+# DB-API currently ends the server process (see the setup guide)
 docker exec -e IRISNAMESPACE=USER iris /usr/irissys/bin/irispython \
-    /opt/irisapp/demos/kumo_tabular_foundation/scripts/load_data.py
+    /opt/irisapp/scripts/run_sql.py \
+    /opt/irisapp/demos/kumo_tabular_foundation/sql/02_create_models.sql
 
-# then run:
-#   sql/02_create_models.sql   -- CREATE / TRAIN models, sample predictions
-#   sql/03_evaluation.sql      -- accuracy / error queries
+# PREDICT() / evaluation queries (from the host over DB-API)
+python scripts/run_sql.py demos/kumo_tabular_foundation/sql/03_evaluation.sql
 ```
 
 `load_data.py` assigns the `split` column with the same seeded 75/25 shuffle

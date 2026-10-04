@@ -129,6 +129,7 @@ addopts = "-ra -q --strict-markers"
 testpaths = [
     "tests",
     "demos/*/tests",
+    "scripts/tests",
     "scripts/automl_keep_features/tests",
 ]
 markers = [

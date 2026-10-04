@@ -1,9 +1,13 @@
 """Create the Kumo Tabular demo tables and load the CSVs into IRIS.
 
-Runs under IRIS embedded Python, inside the IRIS container:
+From the host, over DB-API (`pip install intersystems-irispython`; connection
+settings as in scripts/iris_sql.py, default localhost:1972/USER as demo):
 
-    docker exec -e IRISNAMESPACE=USER iris \
-        /usr/irissys/bin/irispython \
+    python demos/kumo_tabular_foundation/scripts/load_data.py
+
+or inside the IRIS container, with embedded Python:
+
+    docker exec -e IRISNAMESPACE=USER iris /usr/irissys/bin/irispython \
         /opt/irisapp/demos/kumo_tabular_foundation/scripts/load_data.py
 
 The `split` column uses the same seeded 75/25 shuffle as
@@ -12,14 +16,17 @@ run_kumo_tabular_demo.py, so SQL results line up with the local demo.
 
 from __future__ import annotations
 
+import argparse
 import csv
 import random
-import re
+import sys
 from pathlib import Path
 
-import iris
-
 DEMO_DIR = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(DEMO_DIR.parent.parent / "scripts"))
+
+from iris_sql import connect, split_statements  # noqa: E402
+
 DATA_DIR = DEMO_DIR / "data"
 SETUP_SQL = DEMO_DIR / "sql" / "01_setup_tables.sql"
 
@@ -29,14 +36,9 @@ TABLES = (
 )
 
 
-def sql_statements(path: Path):
-    text = re.sub(r"--[^\n]*", "", path.read_text())
-    return [s.strip() for s in text.split(";") if s.strip()]
-
-
 def split_labels(n: int, seed: int = 0, train_frac: float = 0.75):
-    # Mirrors run_kumo_tabular_demo._split (numpy default_rng shuffle) when numpy is
-    # available; falls back to the stdlib RNG otherwise.
+    # Mirrors run_kumo_tabular_demo._split (numpy default_rng shuffle). Without
+    # numpy it falls back to the stdlib RNG, which gives a different split.
     try:
         import numpy as np
 
@@ -53,7 +55,7 @@ def split_labels(n: int, seed: int = 0, train_frac: float = 0.75):
     return labels
 
 
-def load(table: str, csv_path: Path) -> int:
+def load(db, table: str, csv_path: Path) -> int:
     with csv_path.open(newline="") as f:
         reader = csv.reader(f)
         header = next(reader)
@@ -62,19 +64,28 @@ def load(table: str, csv_path: Path) -> int:
     placeholders = ", ".join("?" * len(cols))
     stmt = f"INSERT INTO {table} ({', '.join(cols)}) VALUES ({placeholders})"
     for row, label in zip(rows, split_labels(len(rows))):
-        iris.sql.exec(stmt, *row, label)
+        db.execute(stmt, [*row, label])
     return len(rows)
 
 
-def main() -> None:
-    for stmt in sql_statements(SETUP_SQL):
-        iris.sql.exec(stmt)
-    for table, name in TABLES:
-        n = load(table, DATA_DIR / name)
-        counts = dict(
-            iris.sql.exec(f"SELECT split, COUNT(*) FROM {table} GROUP BY split")
-        )
-        print(f"{table}: loaded {n} rows {counts}")
+def main(argv=None) -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--mode", choices=("auto", "dbapi", "embedded"),
+                        default="auto")
+    args = parser.parse_args(argv)
+
+    db = connect(args.mode)
+    try:
+        for stmt in split_statements(SETUP_SQL.read_text()):
+            db.execute(stmt)
+        for table, name in TABLES:
+            n = load(db, table, DATA_DIR / name)
+            _, rows = db.execute(
+                f"SELECT split, COUNT(*) FROM {table} GROUP BY split"
+            )
+            print(f"{table}: loaded {n} rows {dict(map(tuple, rows))}")
+    finally:
+        db.close()
 
 
 if __name__ == "__main__":
