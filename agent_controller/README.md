@@ -120,6 +120,43 @@ chains, one static goal, automatic retrieval and no stop decision, and gates
 are tuned and tested on the same distribution. It does not yet exercise what
 the brief claims a learned controller is for.
 
+## Coding sessions: offline replay
+
+`replay_transcript.py` asks the S0 question for real coding sessions. It
+replays Claude Code transcripts under different context policies, where a tool
+result can be evicted from the prompt (leaving a short stub) and re-fetched if
+needed, and reports input cost against keeping everything.
+
+```bash
+python -m agent_controller.replay_transcript ~/.claude/projects/*/*.jsonl
+```
+
+It runs locally on the standard library and prints aggregate numbers only.
+
+- **Cost model.** Context sizes come from the recorded token usage. Prompt
+  caching is modelled: an unchanged prefix is read at 0.1x, and everything
+  after the first change is written again at 1.25x. Evicting an old result
+  therefore costs a rewrite of what follows it, so eviction is cheap right
+  after a result arrives and expensive once it is buried.
+- **Policies.** Keep everything; truncate oldest results at half of peak
+  context; a stale rule (superseded, or old and unused); and a hindsight
+  reference that evicts only results never used again.
+- **Misses.** A result evicted and later used is re-fetched and charged one
+  extra request.
+
+Limits: it measures cost, not whether the agent would still have succeeded on
+a trimmed prompt. A result counts as used later only if the agent quotes a line
+from it or edits the file it came from, which undercounts real use and so
+flatters eviction. Only tool results are evictable; the agent's own earlier
+output (for example large file writes) is not.
+
+On the one transcript available while building this (the session that wrote
+this code: 33 requests, peak 188k tokens) the replay of keep-everything is
+within 1% of the recorded input cost. Tool results were only 12% of new
+context there and the hindsight reference saved 8.5%, with no later use
+detected. That session is not representative of a long coding run; the tool
+needs real ones before the numbers mean anything.
+
 ## Files
 
 | File | Contents |
@@ -130,6 +167,7 @@ the brief claims a learned controller is for.
 | `run_s0.py` | Tunes B2 and prints the S0 comparison |
 | `gate.py` | Features, keep-score network, imitation and outcome-driven training |
 | `run_s1.py` | Trains the gate and its ablations and prints the S1 comparison |
+| `replay_transcript.py` | Replays session transcripts under context eviction policies |
 | `results_s0.json`, `results_s1.json` | Outputs of the two runs, including B2's tuned weights |
 
 ## Next
