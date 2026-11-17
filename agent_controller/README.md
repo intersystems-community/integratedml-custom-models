@@ -27,8 +27,8 @@ intervals are within ±0.8 points.
 | Policy | 2 slots | 4 slots | 6 slots | 8 slots |
 |---|---|---|---|---|
 | No working memory | 16.8% | 16.8% | 16.8% | 16.8% |
-| Recency | 29.1% | 47.6% | 63.4% | 76.6% |
-| LRU | 30.3% | 50.3% | 68.3% | 81.4% |
+| Recency | 31.7% | 47.6% | 63.4% | 76.6% |
+| LRU | 32.1% | 50.3% | 68.3% | 81.4% |
 | Type priority | 40.8% | 59.5% | 73.6% | 84.1% |
 | Tuned heuristic (B2) | 55.0% | 76.5% | 89.2% | 94.4% |
 | Informed ceiling | 75.3% | 91.3% | 97.1% | 99.1% |
