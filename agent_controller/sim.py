@@ -84,6 +84,44 @@ class Record:
     n_queries: int = 0
 
 
+class Stats:
+    """Running per-key and per-value counts over everything observed so far.
+
+    This is the controller's view of the durable store: public information
+    only, updated as each fact or query arrives.
+    """
+
+    def __init__(self, n_keys: int):
+        self.mentions = [0] * n_keys
+        self.emphasis_sum = [0.0] * n_keys
+        self.constraints = [0] * n_keys  # mentions labelled "constraint"
+        self.queries = [0] * n_keys
+        self.distinct = [0] * n_keys  # distinct values claimed
+        self.latest = [-1] * n_keys  # most recent claimed value
+        self.values: dict = {}  # (key, value) -> [mentions, confidence sum, hypotheses]
+
+    def clone(self) -> "Stats":
+        c = object.__new__(Stats)
+        for name, v in self.__dict__.items():
+            c.__dict__[name] = list(v) if isinstance(v, list) else v
+        c.values = {k: list(v) for k, v in self.values.items()}
+        return c
+
+    def add_fact(self, ev: "Event") -> None:
+        k = ev.key
+        self.mentions[k] += 1
+        self.emphasis_sum[k] += ev.emphasis
+        self.constraints[k] += ev.category == "constraint"
+        self.latest[k] = ev.value
+        v = self.values.get((k, ev.value))
+        if v is None:
+            v = self.values[(k, ev.value)] = [0, 0.0, 0]
+            self.distinct[k] += 1
+        v[0] += 1
+        v[1] += ev.confidence
+        v[2] += ev.category == "hypothesis"
+
+
 @dataclass(frozen=True)
 class Obs:
     """Policy input when a fact arrives. Contains no hidden fields."""
@@ -95,6 +133,7 @@ class Obs:
     topic_queries: Tuple[int, ...]  # queries seen so far, per topic
     retrievals_left: int
     feasible: Tuple[int, ...]  # slot index to overwrite, or len(slots) = drop
+    stats: Optional[Stats] = None  # live view, already includes the candidate
 
     @property
     def drop(self) -> int:
@@ -199,6 +238,25 @@ class Env:
         self.n_queries = 0
         self.n_correct = 0
         self.trace: List[dict] = []
+        self.stats = Stats(cfg.n_keys)
+        self._ingest()
+
+    def clone(self) -> "Env":
+        """Independent copy of the current state, with an empty trace."""
+        c = object.__new__(Env)
+        c.__dict__.update(self.__dict__)
+        c.slots = list(self.slots)
+        c.store = dict(self.store)
+        c.topic_queries = list(self.topic_queries)
+        c.trace = []
+        c.stats = self.stats.clone()
+        return c
+
+    def _ingest(self) -> None:
+        """Log the arriving fact to the durable store before the gate decides."""
+        if not self.done and self.event.kind == "fact":
+            self.store[self.event.key] = self.event.value
+            self.stats.add_fact(self.event)
 
     @property
     def done(self) -> bool:
@@ -234,6 +292,7 @@ class Env:
             topic_queries=tuple(self.topic_queries),
             retrievals_left=self.retrievals_left,
             feasible=feasible,
+            stats=self.stats,
         )
 
     def step(self, action: Optional[int] = None) -> dict:
@@ -242,7 +301,6 @@ class Env:
             obs = self.obs()
             if action not in obs.feasible:
                 raise ValueError(f"action {action} not in mask {obs.feasible}")
-            self.store[ev.key] = ev.value  # durable store keeps everything
             if action != self.k:
                 self.slots[action] = obs.candidate
             row = {
@@ -255,6 +313,7 @@ class Env:
         else:
             self.n_queries += 1
             self.topic_queries[ev.topic] += 1
+            self.stats.queries[ev.key] += 1
             held = next(
                 (
                     i
@@ -293,6 +352,7 @@ class Env:
             }
         self.trace.append(row)
         self.t += 1
+        self._ingest()
         return row
 
 

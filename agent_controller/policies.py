@@ -173,17 +173,28 @@ class Informed:
 
     def __init__(self, episode: Episode):
         self._w = episode.query_weight
-        self._true = {
-            (ev.key, ev.value) for ev in episode.events if ev.kind == "fact" and ev.is_true
-        }
-        self._events = episode.events
+        self._truth: Dict[int, List[Tuple[int, int]]] = {}  # key -> (step, value)
+        for ev in episode.events:
+            if ev.kind == "fact" and ev.is_true:
+                self._truth.setdefault(ev.key, []).append((ev.step, ev.value))
 
     def _current(self, key: int, step: int) -> int:
         value = -1
-        for ev in self._events[: step + 1]:
-            if ev.kind == "fact" and ev.key == key and ev.is_true:
-                value = ev.value
+        for s, v in self._truth.get(key, ()):
+            if s > step:
+                break
+            value = v
         return value
+
+    def is_true(self, r: Record, step: int) -> bool:
+        return r.value == self._current(r.key, step)
+
+    def weight(self, key: int) -> float:
+        return self._w[key]
+
+    def _worth(self, r: Record, step: int) -> float:
+        """Query weight of the key, or nothing if the held value is not true."""
+        return self._w[r.key] if r.value == self._current(r.key, step) else -1.0
 
     def __call__(self, obs: Obs) -> int:
         c = obs.candidate
@@ -195,8 +206,9 @@ class Informed:
         empty = obs.first_empty()
         if empty is not None:
             return empty
-        worst = min(range(len(obs.slots)), key=lambda i: self._w[obs.slots[i].key])
-        return worst if self._w[c.key] > self._w[obs.slots[worst].key] else obs.drop
+        worth = [self._worth(r, obs.step) for r in obs.slots]
+        worst = min(range(len(worth)), key=worth.__getitem__)
+        return worst if self._w[c.key] > worth[worst] else obs.drop
 
 
 def replay_policy(actions: Sequence[int]) -> Policy:
