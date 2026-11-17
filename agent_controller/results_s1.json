@@ -1,0 +1,135 @@
+{
+  "by_slots": {
+    "2": {
+      "tuned heuristic (B2)": {
+        "accuracy": 0.5499432424687456
+      },
+      "learned gate, imitation only": {
+        "accuracy": 0.5643617038505584,
+        "gain_vs_b2": 0.014418461381812776,
+        "gain_ci95": 0.006746052811632384,
+        "share_of_headroom": 0.07117017321668687,
+        "per_seed_accuracy": [
+          0.5643617038505584
+        ]
+      },
+      "learned gate (A1)": {
+        "accuracy": 0.5796086586845101,
+        "gain_vs_b2": 0.02966541621576451,
+        "gain_ci95": 0.0057563422970900455,
+        "share_of_headroom": 0.14642982733818075,
+        "per_seed_accuracy": [
+          0.5797192162126372,
+          0.5805360831462999,
+          0.5785706766945932
+        ]
+      },
+      "ablation: linear": {
+        "accuracy": 0.5530766683107627,
+        "gain_vs_b2": 0.0031334258420171726,
+        "gain_ci95": 0.006775385930741442,
+        "share_of_headroom": 0.01546673074419036,
+        "per_seed_accuracy": [
+          0.5530766683107627
+        ]
+      },
+      "ablation: B2 inputs only": {
+        "accuracy": 0.5421489083170584,
+        "gain_vs_b2": -0.007794334151687091,
+        "gain_ci95": 0.005622124887406478,
+        "share_of_headroom": -0.038473183580047504,
+        "per_seed_accuracy": [
+          0.5421489083170584
+        ]
+      },
+      "diagnostic: told which claims are true": {
+        "accuracy": 0.5951677015894895,
+        "gain_vs_b2": 0.04522445912074395,
+        "gain_ci95": 0.005942641955877852,
+        "share_of_headroom": 0.22322996220070018,
+        "per_seed_accuracy": [
+          0.5951677015894895
+        ]
+      },
+      "diagnostic: told each key's query weight": {
+        "accuracy": 0.7329666114200557,
+        "gain_vs_b2": 0.18302336895131013,
+        "gain_ci95": 0.007763930405903741,
+        "share_of_headroom": 0.9034115725688235,
+        "per_seed_accuracy": [
+          0.7329666114200557
+        ]
+      },
+      "informed ceiling": {
+        "accuracy": 0.7525345912057213,
+        "gain_vs_b2": 0.20259134873697568
+      }
+    },
+    "4": {
+      "tuned heuristic (B2)": {
+        "accuracy": 0.7651870031499288
+      },
+      "learned gate, imitation only": {
+        "accuracy": 0.7791493624108949,
+        "gain_vs_b2": 0.013962359260966072,
+        "gain_ci95": 0.005755711896012005,
+        "share_of_headroom": 0.0946575759592052,
+        "per_seed_accuracy": [
+          0.7791493624108949
+        ]
+      },
+      "learned gate (A1)": {
+        "accuracy": 0.7921919110907629,
+        "gain_vs_b2": 0.02700490794083415,
+        "gain_ci95": 0.004652665355207851,
+        "share_of_headroom": 0.18307931180564568,
+        "per_seed_accuracy": [
+          0.7921089037954363,
+          0.7921832581691327,
+          0.7922835713077199
+        ]
+      },
+      "ablation: linear": {
+        "accuracy": 0.7626907243813978,
+        "gain_vs_b2": -0.002496278768531091,
+        "gain_ci95": 0.005811006243748381,
+        "share_of_headroom": -0.01692347924381038,
+        "per_seed_accuracy": [
+          0.7626907243813978
+        ]
+      },
+      "ablation: B2 inputs only": {
+        "accuracy": 0.7523360014999334,
+        "gain_vs_b2": -0.012851001649995458,
+        "gain_ci95": 0.005137135322398953,
+        "share_of_headroom": -0.08712314603142142,
+        "per_seed_accuracy": [
+          0.7523360014999334
+        ]
+      },
+      "diagnostic: told which claims are true": {
+        "accuracy": 0.8110925628035536,
+        "gain_vs_b2": 0.045905559653624674,
+        "gain_ci95": 0.00518823877142059,
+        "share_of_headroom": 0.31121595703462407,
+        "per_seed_accuracy": [
+          0.8110925628035536
+        ]
+      },
+      "diagnostic: told each key's query weight": {
+        "accuracy": 0.8895868331631103,
+        "gain_vs_b2": 0.1243998300131814,
+        "gain_ci95": 0.006290710078377804,
+        "share_of_headroom": 0.8433665212801709,
+        "per_seed_accuracy": [
+          0.8895868331631103
+        ]
+      },
+      "informed ceiling": {
+        "accuracy": 0.9126908782437034,
+        "gain_vs_b2": 0.14750387509377447
+      }
+    }
+  },
+  "minutes_per_job": 2.3415080276628335
+}
