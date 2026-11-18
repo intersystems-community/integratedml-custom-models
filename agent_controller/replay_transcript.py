@@ -730,6 +730,39 @@ def cache_breakdown(sessions: Sequence[Session], actual: float) -> dict:
     }
 
 
+def by_week(sessions: Sequence[Session]) -> List[dict]:
+    """Per ISO week: requests, share of cache writes at the 1-hour price, and
+    the extra input cost of cache misses as a share of that week's input cost."""
+    weeks: Dict[str, dict] = {}
+    for s in sessions:
+        for prev, r in zip([None] + s.requests[:-1], s.requests):
+            if r.time is None:
+                continue
+            y, w, _ = datetime.utcfromtimestamp(r.time).isocalendar()
+            k = f"{y}-W{w:02d}"
+            b = weeks.setdefault(k, {"week": k, "requests": 0, "cost": 0.0,
+                                     "written": 0.0, "written_1h": 0.0, "miss_cost": 0.0})
+            b["requests"] += 1
+            b["cost"] += r.actual_cost
+            created = max(0, r.context - r.cache_read - r.plain)
+            b["written"] += created
+            b["written_1h"] += created * (r.write_price - WRITE) / (WRITE_1H - WRITE)
+            if prev is not None and not r.reset:
+                missed = max(0, prev.context - r.cache_read)
+                if missed >= 0.1 * prev.context:
+                    b["miss_cost"] += missed * (r.write_price - READ)
+    out = []
+    for k in sorted(weeks):
+        b = weeks[k]
+        out.append({
+            "week": k,
+            "requests": b["requests"],
+            "one_hour_write_share": b["written_1h"] / max(1, b["written"]),
+            "miss_share_of_input_cost": b["miss_cost"] / max(1e-9, b["cost"]),
+        })
+    return out
+
+
 def main(argv: Optional[List[str]] = None) -> dict:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("transcripts", nargs="+", type=Path)
@@ -737,6 +770,11 @@ def main(argv: Optional[List[str]] = None) -> dict:
     ap.add_argument("--out", type=Path, default=None, help="write summary JSON")
     ap.add_argument(
         "--diagnose", action="store_true", help="print aggregate parsing checks"
+    )
+    ap.add_argument(
+        "--weekly",
+        action="store_true",
+        help="print 1-hour cache share and cache-miss cost per week",
     )
     ap.add_argument(
         "--breakdown",
@@ -816,6 +854,15 @@ def main(argv: Optional[List[str]] = None) -> dict:
             f"cost by roughly {c['one_hour_cache_net_change']:+.1%} (rough: assumes "
             "unexplained 5-60 minute misses are expiry)."
         )
+    if args.weekly:
+        res["weekly"] = by_week(sessions)
+        print("\n| week | requests | 1-hour share of cache writes | cache misses, share of input cost |")
+        print("|---|---|---|---|")
+        for b in res["weekly"]:
+            print(
+                f"| {b['week']} | {b['requests']} | {b['one_hour_write_share']:.0%} "
+                f"| {b['miss_share_of_input_cost']:.1%} |"
+            )
     if args.out:
         args.out.write_text(json.dumps(res, indent=2))
     return res
