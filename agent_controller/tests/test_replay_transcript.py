@@ -161,3 +161,41 @@ def test_summary_reports_every_policy(tmp_path):
     assert res["policies"]["hindsight reference"]["misses"] == 0
     assert 0 < res["reused_share_of_result_tokens"] <= 1
     assert READ < WRITE and STUB_TOKENS > 0
+
+
+def test_any_shrink_rebuilds_from_the_recorded_size(tmp_path):
+    rows = [
+        assistant("m0", 50_000, 0, [tool_use("t0", "Bash", command="x")]),
+        result("t0", BIG),
+        assistant("m1", 60_000, 50_000, [tool_use("t1", "Bash", command="y")]),
+        assistant("m2", 55_000, 40_000, [tool_use("t2", "Bash", command="z")]),
+        assistant("m3", 56_000, 55_000, [tool_use("t3", "Bash", command="w")]),
+    ]
+    s = load_session(write(tmp_path, rows))
+    assert s.requests[2].reset and not s.requests[3].reset
+    out = replay(s, keep_all)
+    assert out.peak == 60_000
+    assert out.cost == pytest.approx(sum(r.actual_cost for r in s.requests))
+
+
+def test_one_hour_writes_and_server_iterations_are_priced(tmp_path):
+    usage = {
+        "input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 1_000,
+        "cache_creation": {"ephemeral_1h_input_tokens": 1_000},
+    }
+    second = dict(usage, cache_read_input_tokens=1_000, cache_creation_input_tokens=500,
+                  cache_creation={"ephemeral_1h_input_tokens": 0})
+    row = {
+        "type": "assistant",
+        "message": {
+            "id": "m0",
+            "usage": dict(usage, iterations=[usage, second]),
+            "content": [],
+        },
+    }
+    s = load_session(write(tmp_path, [row]))
+    r = s.requests[0]
+    assert r.context == 1_500 and r.iterations == 2
+    assert r.actual_cost == pytest.approx(1_000 * 2.0 + 1_000 * READ + 500 * WRITE)

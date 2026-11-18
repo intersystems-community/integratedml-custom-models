@@ -32,6 +32,7 @@ from pathlib import Path
 from typing import Callable, Dict, List, Optional, Sequence, Set
 
 READ, WRITE, PLAIN = 0.1, 1.25, 1.0  # price relative to an uncached input token
+WRITE_1H = 2.0  # cache writes with a one-hour lifetime
 STUB_TOKENS = 40  # what an evicted result leaves behind
 IMAGE_TOKENS = 1500
 CHARS_PER_TOKEN = 4.0
@@ -62,9 +63,12 @@ class Request:
     context: int  # prompt tokens actually sent
     cache_read: int
     actual_cost: float
+    plain: int = 0  # uncached, unwritten input tokens
+    write_price: float = WRITE
+    iterations: int = 1  # server-side iterations summed into one record
     fixed: int = 0  # new non-evictable tokens since the previous request
     items: List[Item] = field(default_factory=list)  # new tool results
-    reset: bool = False  # context shrank: compaction or a fresh start
+    reset: bool = False  # context shrank: compaction, context editing or a restart
     cold: bool = False  # cache was not reused
 
 
@@ -108,6 +112,19 @@ def _result_text_and_tokens(content) -> tuple:
         elif block.get("type") in ("image", "document"):
             tokens += IMAGE_TOKENS
     return texts, tokens
+
+
+def _usage_cost(u: dict) -> tuple:
+    """Input cost of one usage record, and its price per written token."""
+    read = u.get("cache_read_input_tokens", 0) or 0
+    created = u.get("cache_creation_input_tokens", 0) or 0
+    plain = u.get("input_tokens", 0) or 0
+    split = u.get("cache_creation") or {}
+    one_hour = split.get("ephemeral_1h_input_tokens", 0) or 0
+    one_hour = min(one_hour, created)
+    write_cost = (created - one_hour) * WRITE + one_hour * WRITE_1H
+    price = write_cost / created if created else WRITE
+    return read * READ + write_cost + plain * PLAIN, price
 
 
 def load_session(path: Path) -> Session:
@@ -156,9 +173,18 @@ def load_session(path: Path) -> Session:
         usage = msg.get("usage") or {}
         mid = msg.get("id") or row.get("uuid")
         if mid not in by_message:
-            read = usage.get("cache_read_input_tokens", 0) or 0
-            created = usage.get("cache_creation_input_tokens", 0) or 0
-            plain = usage.get("input_tokens", 0) or 0
+            iters = [
+                i for i in (usage.get("iterations") or []) if isinstance(i, dict)
+            ] or [usage]
+            cost, wprice = 0.0, WRITE
+            for it in iters:
+                c, w = _usage_cost(it)
+                cost += c
+                wprice = w
+            last = iters[-1]  # the prompt actually sent last
+            read = last.get("cache_read_input_tokens", 0) or 0
+            created = last.get("cache_creation_input_tokens", 0) or 0
+            plain = last.get("input_tokens", 0) or 0
             ctx = read + created + plain
             if ctx == 0:
                 continue  # synthetic message with no API call behind it
@@ -166,10 +192,16 @@ def load_session(path: Path) -> Session:
                 index=len(requests),
                 context=ctx,
                 cache_read=read,
-                actual_cost=read * READ + created * WRITE + plain * PLAIN,
+                actual_cost=cost,
+                plain=plain,
+                write_price=wprice,
+                iterations=len(iters),
             )
             prev = requests[-1].context if requests else 0
-            r.reset = bool(requests) and ctx < 0.6 * prev
+            # Any shrink means the client removed content (compaction, context
+            # editing, a restart). What was removed is not recorded, so start
+            # over from the recorded size.
+            r.reset = bool(requests) and ctx < prev
             r.cold = bool(requests) and not r.reset and read < 0.5 * prev
             if r.reset:
                 pending = []  # whatever was pending is inside the summary now
@@ -244,6 +276,7 @@ class View:
     cached_end: int  # segments before this index are in the cache, if warm
     cold: bool
     context: int
+    write_price: float = WRITE
 
     def evictable(self) -> List[int]:
         return [
@@ -295,7 +328,7 @@ def best_cut(view: View, dead: List[int], remaining: float) -> List[int]:
             saved += seg.tokens - STUB_TOKENS
             rewrite += STUB_TOKENS
             chosen.append(i)
-            net = saved * READ * remaining - rewrite * (WRITE - READ)
+            net = saved * READ * remaining - rewrite * (view.write_price - READ)
             if net > best_net:
                 best, best_net = list(chosen), net
         else:
@@ -345,6 +378,13 @@ class Outcome:
 
 
 def replay(session: Session, policy: Policy) -> Outcome:
+    """Re-price a session with `policy` evicting tool results.
+
+    The recorded cache hit is reused: the uncached tail of each request is the
+    same tokens as recorded, so only the prefix before the first eviction made
+    at this request can be read from cache. With no evictions the replay
+    reproduces the recorded input cost.
+    """
     out = Outcome()
     segs: List[Seg] = []
     n = len(session.requests)
@@ -356,24 +396,31 @@ def replay(session: Session, policy: Policy) -> Outcome:
             segs.append(Seg(r.fixed))
         segs += [Seg(i.tokens, i) for i in r.items]
 
+        before = sum(s.size for s in segs)
         cold = r.cold or r.reset or r.index == 0
-        view = View(r.index, n, segs, cached_end, cold, sum(s.size for s in segs))
+        view = View(r.index, n, segs, cached_end, cold, before, r.write_price)
         evict = policy(view)
         for i in evict:
             segs[i].full = False
             out.evictions += 1
             out.evicted_tokens += segs[i].tokens - STUB_TOKENS
-        first_change = min(evict) if evict else cached_end
 
         context = sum(s.size for s in segs)
+        tail = max(0, r.context - r.cache_read)  # recorded uncached tokens
+        cached = max(0, before - tail)
+        if evict:
+            cached = min(cached, sum(s.size for s in segs[: min(evict)]))
+        written = max(0, context - cached)
+        plain = min(r.plain, written)
         if r.index == 0:
-            # shared starting point: charge what was actually paid
-            out.cost += r.actual_cost
-        elif cold:
-            out.cost += context * WRITE
+            out.cost += r.actual_cost  # shared starting point
         else:
-            cached = sum(s.size for s in segs[: min(first_change, cached_end)])
-            out.cost += cached * READ + (context - cached) * WRITE
+            out.cost += cached * READ + plain * PLAIN + (written - plain) * r.write_price
+            # server-side iterations beyond the last are charged as recorded
+            if r.iterations > 1:
+                last = r.cache_read * READ + r.plain * PLAIN
+                last += (r.context - r.cache_read - r.plain) * r.write_price
+                out.cost += max(0.0, r.actual_cost - last)
 
         # the agent's output at this request may need something evicted
         for seg in list(segs):
@@ -383,7 +430,8 @@ def replay(session: Session, policy: Policy) -> Outcome:
                 seg.item = None  # the stub stays behind as plain content
                 seg.tokens, seg.full = STUB_TOKENS, True
                 context += segs[-1].tokens
-                out.cost += (context - segs[-1].tokens) * READ + segs[-1].tokens * WRITE
+                out.cost += (context - segs[-1].tokens) * READ
+                out.cost += segs[-1].tokens * r.write_price
 
         out.peak = max(out.peak, context)
         out.context_sum += context
@@ -412,6 +460,27 @@ def summarize(sessions: Sequence[Session]) -> dict:
                 setattr(t, f, getattr(t, f) + getattr(o, f))
             t.requests += o.requests
             t.peak = max(t.peak, o.peak)
+    reqs = [r for s in sessions for r in s.requests]
+    ctx = sorted(r.context for r in reqs)
+
+    def pct(q: float) -> int:
+        return ctx[min(len(ctx) - 1, int(q * len(ctx)))]
+
+    diagnostics = {
+        "context_p50": pct(0.5),
+        "context_p90": pct(0.9),
+        "context_p99": pct(0.99),
+        "context_max": ctx[-1],
+        "requests_over_1m": sum(c > 1_000_000 for c in ctx),
+        "multi_iteration_requests": sum(r.iterations > 1 for r in reqs),
+        "resets": sum(r.reset for r in reqs),
+        "cache_misses": sum(r.cold for r in reqs),
+        "one_hour_write_share": sum(
+            (r.write_price - WRITE) / (WRITE_1H - WRITE) * (r.context - r.cache_read)
+            for r in reqs
+        )
+        / max(1, sum(r.context - r.cache_read for r in reqs)),
+    }
     items = [i for s in sessions for i in s.items]
     result_tokens = sum(i.tokens for i in items)
     reused = sum(i.tokens for i in items if i.uses)
@@ -424,6 +493,7 @@ def summarize(sessions: Sequence[Session]) -> dict:
         / max(1, sum(r.fixed for s in sessions for r in s.requests) + result_tokens),
         "reused_share_of_result_tokens": reused / max(1, result_tokens),
         "actual_input_cost": actual,
+        "diagnostics": diagnostics,
         "policies": {
             name: {
                 "input_cost": o.cost,
@@ -443,6 +513,9 @@ def main(argv: Optional[List[str]] = None) -> dict:
     ap.add_argument("transcripts", nargs="+", type=Path)
     ap.add_argument("--min-requests", type=int, default=20, help="skip short sessions")
     ap.add_argument("--out", type=Path, default=None, help="write summary JSON")
+    ap.add_argument(
+        "--diagnose", action="store_true", help="print aggregate parsing checks"
+    )
     args = ap.parse_args(argv)
 
     sessions = [load_session(p) for p in args.transcripts]
@@ -472,6 +545,18 @@ def main(argv: Optional[List[str]] = None) -> dict:
             f"| {name} | {p['vs_keep_everything']:+.1%} | {p['mean_context']:,.0f} "
             f"| {p['peak_context']:,} | {p['evictions']} | {p['misses']} |"
         )
+    if args.diagnose:
+        d = res["diagnostics"]
+        print("\nDiagnostics (recorded prompt size per request, in tokens):")
+        print(
+            f"  p50 {d['context_p50']:,}  p90 {d['context_p90']:,}  "
+            f"p99 {d['context_p99']:,}  max {d['context_max']:,}"
+        )
+        print(f"  requests over 1M tokens: {d['requests_over_1m']}")
+        print(f"  requests with several server-side iterations: {d['multi_iteration_requests']}")
+        print(f"  context resets (compaction or restart): {d['resets']}")
+        print(f"  requests that missed the cache: {d['cache_misses']}")
+        print(f"  share of cache writes at the 1-hour price: {d['one_hour_write_share']:.0%}")
     if args.out:
         args.out.write_text(json.dumps(res, indent=2))
     return res
