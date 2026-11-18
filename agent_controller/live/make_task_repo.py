@@ -75,6 +75,30 @@ def build(root: Path, seed: int, n_modules: int, n_bugs: int, filler: int) -> Di
                             "bug": bug, "buggy": False})
     for h in rng.sample(helpers, n_bugs):
         h["buggy"] = True
+    # every rules module is used by exactly one other module (a derangement),
+    # so every bug sits behind at least one test
+    order = list(range(n_modules))
+    while True:
+        rng.shuffle(order)
+        if all(i != j for i, j in enumerate(order)):
+            break
+
+    def ref(body: str, x: int, y: int) -> int:
+        env: Dict = {}
+        exec(f"def f(x, y):\n    {body}", env)
+        return env["f"](x, y)
+
+    def both(body: str, x: int, y: int) -> int:
+        return ref(body, x, y) + ref(body, y, x)
+
+    def pick(h: Dict) -> tuple:
+        """Test inputs on which the planted bug changes the caller's result."""
+        pairs = [(rng.randrange(2, 40), rng.randrange(2, 40)) for _ in range(200)]
+        pairs += [(v, v) for v in range(2, 40)]
+        for x, y in pairs:
+            if both(h["body"], x, y) != both(h["bug"], x, y):
+                return x, y
+        raise AssertionError(f"bug in {h['name']} cannot be detected")
 
     callers: List[Dict] = []
     tests: Dict[str, List[str]] = {m: [] for m in mods}
@@ -84,6 +108,9 @@ def build(root: Path, seed: int, n_modules: int, n_bugs: int, filler: int) -> Di
         for h in (h for h in helpers if h["module"] == m):
             body = h["bug"] if h["buggy"] else h["body"]
             rules.append(_func(h["name"], body, f"Business rule {h['name']}."))
+        for k in range(filler // 2):
+            rules.append(_func(f"_retired_{m}_rule_{k}", f"return (x - {k}) * (y + {k % 5}) // 3",
+                               "Retired rule kept for audit history; not used."))
         (pkg / "rules" / f"{m}.py").write_text("\n".join(rules) + "\n")
         src = [f'"""{m.replace("_", " ").title()} calculations."""', "",
                "from __future__ import annotations", ""]
@@ -92,9 +119,7 @@ def build(root: Path, seed: int, n_modules: int, n_bugs: int, filler: int) -> Di
             src.append(_func(f"_legacy_{m}_{k}", f"return (x + {k}) * (y + {k % 7})",
                              "Legacy rule kept for compatibility; not used by current callers."))
         # callers use helpers from another module
-        other = mods[(i + 1 + rng.randrange(len(mods) - 1)) % len(mods)]
-        if other == m:
-            other = mods[(i + 1) % len(mods)]
+        other = mods[order[i]]
         targets = [h for h in helpers if h["module"] == other]
         imports = sorted({h["name"] for h in targets})
         src.insert(3, f"from app.rules.{other} import {', '.join(imports)}")
@@ -105,15 +130,10 @@ def build(root: Path, seed: int, n_modules: int, n_bugs: int, filler: int) -> Di
             callers.append({"module": m, "name": cname, "helper": h})
         (pkg / f"{m}.py").write_text("\n".join(src) + "\n")
 
-    def ref(body: str, x: int, y: int) -> int:
-        env: Dict = {}
-        exec(f"def f(x, y):\n    {body}", env)
-        return env["f"](x, y)
-
     for c in callers:
         h = c["helper"]
-        x, y = rng.randrange(2, 40), rng.randrange(2, 40)
-        want = ref(h["body"], x, y) + ref(h["body"], y, x)
+        x, y = pick(h)
+        want = both(h["body"], x, y)
         tests[c["module"]].append(
             f"def test_{c['name']}():\n    assert {c['name']}({x}, {y}) == {want}\n")
     for m, ts in tests.items():
@@ -189,8 +209,8 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("dest", type=Path)
     ap.add_argument("--seed", type=int, default=1)
-    ap.add_argument("--modules", type=int, default=30)
-    ap.add_argument("--bugs", type=int, default=10)
+    ap.add_argument("--modules", type=int, default=40)
+    ap.add_argument("--bugs", type=int, default=24)
     ap.add_argument("--filler", type=int, default=60, help="padding functions per module")
     args = ap.parse_args()
     if args.dest.exists() and any(args.dest.iterdir()):

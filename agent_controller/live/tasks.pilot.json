@@ -1,5 +1,5 @@
 {
-  "_comment": "Generate the repos first: python -m agent_controller.live.make_task_repo ~/ccruns/bugs-a --seed 1  (and bugs-b --seed 2)",
+  "_comment": "Generate the repos first (delete old ones; the generator refuses to overwrite): python -m agent_controller.live.make_task_repo ~/ccruns/bugs-a --seed 1  (and bugs-b --seed 2)",
   "tasks": [
     {
       "name": "bugs-a",
