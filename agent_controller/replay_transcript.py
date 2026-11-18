@@ -72,6 +72,8 @@ class Request:
     reset: bool = False  # context shrank: compaction, context editing or a restart
     cold: bool = False  # cache was not reused
     time: Optional[float] = None  # seconds since the epoch, if recorded
+    model: str = ""
+    events: Set[str] = field(default_factory=set)  # attachment types since last request
     # new tokens since the previous request, by where they came from
     composition: Dict[str, int] = field(default_factory=dict)
 
@@ -188,6 +190,7 @@ def load_session(path: Path) -> Session:
     authored: Set[str] = set()  # lines the agent has written itself
     latest_read: Dict[str, Item] = {}
     chars: Dict[str, int] = {}  # other new content waiting for the next request
+    events: Set[str] = set()  # attachment types waiting for the next request
 
     def add(source: str, texts) -> None:
         chars[source] = chars.get(source, 0) + sum(len(t) for t in texts)
@@ -198,6 +201,9 @@ def load_session(path: Path) -> Session:
         blocks = content if isinstance(content, list) else []
 
         if row["type"] == "attachment":
+            kind = (row.get("attachment") or {}).get("type")
+            if isinstance(kind, str):
+                events.add(kind)
             add(
                 "attachments and reminders",
                 [c.get("content", "") for c in row.get("rendered") or []
@@ -263,6 +269,8 @@ def load_session(path: Path) -> Session:
             r.reset = bool(requests) and ctx < prev
             r.cold = bool(requests) and not r.reset and read < 0.5 * prev
             r.time = _timestamp(row.get("timestamp"))
+            r.model = str(msg.get("model") or "")
+            r.events, events = events, set()
             if r.reset:
                 pending = []  # whatever was pending is inside the summary now
                 chars = {}
@@ -601,35 +609,61 @@ def composition(sessions: Sequence[Session]) -> dict:
 
 
 GAPS = ((300, "under 5 min"), (3600, "5 to 60 min"), (float("inf"), "over 1 hour"))
+# attachment types that signal a change to the tool list or system instructions,
+# either of which invalidates the cached prefix
+PROMPT_CHANGES = {
+    "deferred_tools_delta",
+    "mcp_instructions_delta",
+    "agent_listing_delta",
+    "skill_listing",
+    "instructions",
+    "date",
+}
+
+
+def miss_cause(prev: Request, r: Request) -> str:
+    if prev.model and r.model and prev.model != r.model:
+        return "model switched"
+    if r.events & PROMPT_CHANGES:
+        return "tools, instructions or date changed"
+    if r.time is None or prev.time is None:
+        return "no timestamp"
+    gap = r.time - prev.time
+    return "none of these, pause " + next(lab for limit, lab in GAPS if gap < limit)
 
 
 def cache_breakdown(sessions: Sequence[Session], actual: float) -> dict:
     """Extra input cost from prefixes that should have been cached but were
-    written again, grouped by the pause before the request, plus the cost of
-    requests that follow a reset."""
-    buckets = {label: {"requests": 0, "extra_cost": 0.0} for _, label in GAPS}
-    buckets["no timestamp"] = {"requests": 0, "extra_cost": 0.0}
+    written again, by likely cause; the cost of requests after a reset; and a
+    rough counterfactual for using the one-hour cache on every write."""
+    causes = ["model switched", "tools, instructions or date changed"]
+    causes += ["none of these, pause " + lab for _, lab in GAPS] + ["no timestamp"]
+    buckets = {c: {"requests": 0, "extra_cost": 0.0} for c in causes}
     reset_cost = 0.0
+    upgrade = 0.0  # extra paid if every 5-minute write were a 1-hour write
+    recovered = 0.0  # 5-60 minute misses a 1-hour cache would have read instead
     for s in sessions:
         for prev, r in zip(s.requests, s.requests[1:]):
+            created = max(0, r.context - r.cache_read - r.plain)
+            five_min = created * (WRITE_1H - r.write_price) / (WRITE_1H - WRITE)
+            upgrade += five_min * (WRITE_1H - WRITE)
             if r.reset:
                 reset_cost += r.actual_cost
                 continue
             missed = max(0, prev.context - r.cache_read)
             if missed < 0.1 * prev.context:
                 continue
-            if r.time is None or prev.time is None:
-                label = "no timestamp"
-            else:
-                gap = r.time - prev.time
-                label = next(lab for limit, lab in GAPS if gap < limit)
-            buckets[label]["requests"] += 1
-            buckets[label]["extra_cost"] += missed * (r.write_price - READ)
+            cause = miss_cause(prev, r)
+            buckets[cause]["requests"] += 1
+            buckets[cause]["extra_cost"] += missed * (r.write_price - READ)
+            if cause == "none of these, pause 5 to 60 min":
+                recovered += missed * (WRITE_1H - READ)
     for b in buckets.values():
         b["share_of_input_cost"] = b["extra_cost"] / max(1e-9, actual)
     return {
-        "misses_by_pause": buckets,
+        "misses_by_cause": buckets,
         "reset_requests_share_of_input_cost": reset_cost / max(1e-9, actual),
+        "one_hour_cache_net_change": (upgrade - recovered) / max(1e-9, actual),
     }
 
 
@@ -696,13 +730,18 @@ def main(argv: Optional[List[str]] = None) -> dict:
             print(f"| {k} | {v['new']:.0%} | {v['resident']:.0%} |")
         c = res["cache"]
         print("\nCache misses (a prefix that should have been cached was written again):\n")
-        print("| pause before the request | requests | extra cost, share of input cost |")
+        print("| likely cause | requests | extra cost, share of input cost |")
         print("|---|---|---|")
-        for label, b in c["misses_by_pause"].items():
+        for label, b in c["misses_by_cause"].items():
             print(f"| {label} | {b['requests']} | {b['share_of_input_cost']:.1%} |")
         print(
             f"\nRequests right after a reset: "
             f"{c['reset_requests_share_of_input_cost']:.1%} of input cost."
+        )
+        print(
+            "Writing every cache entry with the 1-hour lifetime would change input "
+            f"cost by roughly {c['one_hour_cache_net_change']:+.1%} (rough: assumes "
+            "unexplained 5-60 minute misses are expiry)."
         )
     if args.out:
         args.out.write_text(json.dumps(res, indent=2))

@@ -229,7 +229,24 @@ def test_cache_misses_are_grouped_by_pause(tmp_path):
     for row, t in zip(rows, ("10:00:00", "10:01:00", "12:00:00")):
         row["timestamp"] = f"2026-01-01T{t}Z"
     s = load_session(write(tmp_path, rows))
-    c = summarize([s])["cache"]["misses_by_pause"]
-    assert c["over 1 hour"]["requests"] == 1
-    assert c["under 5 min"]["requests"] == 0
-    assert c["over 1 hour"]["extra_cost"] == pytest.approx(11_000 * (WRITE - READ))
+    c = summarize([s])["cache"]["misses_by_cause"]
+    long_pause = c["none of these, pause over 1 hour"]
+    assert long_pause["requests"] == 1
+    assert c["none of these, pause under 5 min"]["requests"] == 0
+    assert long_pause["extra_cost"] == pytest.approx(11_000 * (WRITE - READ))
+
+
+def test_misses_are_attributed_to_model_switches_and_prompt_changes(tmp_path):
+    rows = [
+        assistant("m0", 10_000, 0, []),
+        assistant("m1", 11_000, 0, []),
+        {"type": "attachment", "attachment": {"type": "deferred_tools_delta"}},
+        assistant("m2", 12_000, 0, []),
+    ]
+    rows[0]["message"]["model"] = "a"
+    rows[1]["message"]["model"] = "b"
+    rows[3]["message"]["model"] = "b"
+    s = load_session(write(tmp_path, rows))
+    c = summarize([s])["cache"]["misses_by_cause"]
+    assert c["model switched"]["requests"] == 1
+    assert c["tools, instructions or date changed"]["requests"] == 1
