@@ -161,6 +161,27 @@ context there and the hindsight reference saved 8.5%, with no later use
 detected. That session is not representative of a long coding run; the tool
 needs real ones before the numbers mean anything.
 
+## Live runs: does earlier compaction keep answers as good?
+
+`live/run_matrix.py` runs the same long coding tasks under different context
+policies with Claude Code headless (`claude -p`), checks each result with the
+task's own test command, and records the cost Claude Code reports plus peak
+context and compactions from the run's transcript. Each run gets a fresh git
+worktree at a fixed ref; conditions are interleaved so drift over the day hits
+all of them. Conditions are environment settings, for example
+`CLAUDE_CODE_AUTO_COMPACT_WINDOW=200000` (documented range 100k to 1M).
+
+```bash
+cp agent_controller/live/tasks.example.json tasks.json   # edit: your repos, prompts, checks
+python -m agent_controller.live.run_matrix tasks.json --dry-run
+python -m agent_controller.live.run_matrix tasks.json --only-task NAME --budget-usd 10
+```
+
+Runs spend real money and run tools on your machine with the allowed tool
+list (Bash included by default), inside the worktree. `sawtooth.py` plots one
+session's prompt size and estimates what compacting at a lower threshold would
+have cost.
+
 ## Files
 
 | File | Contents |

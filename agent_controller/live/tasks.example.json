@@ -1,0 +1,17 @@
+{
+  "tasks": [
+    {
+      "name": "example-fix-failing-tests",
+      "repo": "~/ws/some-repo",
+      "ref": "main",
+      "prompt": "The test suite has failing tests. Find the causes and fix them without changing the tests. Run the tests to confirm.",
+      "check": "python -m pytest -q",
+      "timeout_minutes": 90
+    }
+  ],
+  "conditions": {
+    "default": {},
+    "compact-400k": {"CLAUDE_CODE_AUTO_COMPACT_WINDOW": "400000"},
+    "compact-200k": {"CLAUDE_CODE_AUTO_COMPACT_WINDOW": "200000"}
+  }
+}
