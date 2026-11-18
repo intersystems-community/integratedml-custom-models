@@ -73,6 +73,10 @@ class Request:
     cold: bool = False  # cache was not reused
     time: Optional[float] = None  # seconds since the epoch, if recorded
     model: str = ""
+    version: str = ""  # Claude Code version
+    effort: str = ""
+    speed: str = ""  # fast mode shows up here
+    images: int = 0  # images or documents sent since the last request
     events: Set[str] = field(default_factory=set)  # attachment types since last request
     # new tokens since the previous request, by where they came from
     composition: Dict[str, int] = field(default_factory=dict)
@@ -270,6 +274,9 @@ def load_session(path: Path) -> Session:
             r.cold = bool(requests) and not r.reset and read < 0.5 * prev
             r.time = _timestamp(row.get("timestamp"))
             r.model = str(msg.get("model") or "")
+            r.version = str(row.get("version") or "")
+            r.effort = str(row.get("effort") or "")
+            r.speed = str(usage.get("speed") or "")
             r.events, events = events, set()
             if r.reset:
                 pending = []  # whatever was pending is inside the summary now
@@ -622,8 +629,16 @@ PROMPT_CHANGES = {
 
 
 def miss_cause(prev: Request, r: Request) -> str:
-    if prev.model and r.model and prev.model != r.model:
+    def changed(field: str) -> bool:
+        a, b = getattr(prev, field), getattr(r, field)
+        return bool(a and b and a != b)
+
+    if changed("model"):
         return "model switched"
+    if changed("version"):
+        return "Claude Code upgraded"
+    if changed("effort") or changed("speed"):
+        return "effort or fast mode changed"
     if r.events & PROMPT_CHANGES:
         return "tools, instructions or date changed"
     if r.time is None or prev.time is None:
@@ -636,9 +651,16 @@ def cache_breakdown(sessions: Sequence[Session], actual: float) -> dict:
     """Extra input cost from prefixes that should have been cached but were
     written again, by likely cause; the cost of requests after a reset; and a
     rough counterfactual for using the one-hour cache on every write."""
-    causes = ["model switched", "tools, instructions or date changed"]
+    causes = [
+        "model switched",
+        "Claude Code upgraded",
+        "effort or fast mode changed",
+        "tools, instructions or date changed",
+    ]
     causes += ["none of these, pause " + lab for _, lab in GAPS] + ["no timestamp"]
     buckets = {c: {"requests": 0, "extra_cost": 0.0} for c in causes}
+    depth = {"most of the prompt": 0, "about half": 0, "a smaller tail": 0}
+    depth_cost = {k: 0.0 for k in depth}
     reset_cost = 0.0
     upgrade = 0.0  # extra paid if every 5-minute write were a 1-hour write
     recovered = 0.0  # 5-60 minute misses a 1-hour cache would have read instead
@@ -656,6 +678,15 @@ def cache_breakdown(sessions: Sequence[Session], actual: float) -> dict:
             cause = miss_cause(prev, r)
             buckets[cause]["requests"] += 1
             buckets[cause]["extra_cost"] += missed * (r.write_price - READ)
+            if cause == "none of these, pause under 5 min":
+                frac = missed / prev.context
+                k = (
+                    "most of the prompt"
+                    if frac >= 0.8
+                    else "about half" if frac >= 0.4 else "a smaller tail"
+                )
+                depth[k] += 1
+                depth_cost[k] += missed * (r.write_price - READ) / max(1e-9, actual)
             if cause == "none of these, pause 5 to 60 min":
                 recovered += missed * (WRITE_1H - READ)
     for b in buckets.values():
@@ -663,6 +694,10 @@ def cache_breakdown(sessions: Sequence[Session], actual: float) -> dict:
     return {
         "misses_by_cause": buckets,
         "reset_requests_share_of_input_cost": reset_cost / max(1e-9, actual),
+        "short_unexplained_by_depth": {
+            k: {"requests": depth[k], "share_of_input_cost": depth_cost[k]}
+            for k in depth
+        },
         "one_hour_cache_net_change": (upgrade - recovered) / max(1e-9, actual),
     }
 
@@ -734,6 +769,11 @@ def main(argv: Optional[List[str]] = None) -> dict:
         print("|---|---|---|")
         for label, b in c["misses_by_cause"].items():
             print(f"| {label} | {b['requests']} | {b['share_of_input_cost']:.1%} |")
+        print("\nUnexplained misses under 5 min, by how much of the prompt was rewritten:\n")
+        print("| rewritten | requests | extra cost, share of input cost |")
+        print("|---|---|---|")
+        for k, v in c["short_unexplained_by_depth"].items():
+            print(f"| {k} | {v['requests']} | {v['share_of_input_cost']:.1%} |")
         print(
             f"\nRequests right after a reset: "
             f"{c['reset_requests_share_of_input_cost']:.1%} of input cost."

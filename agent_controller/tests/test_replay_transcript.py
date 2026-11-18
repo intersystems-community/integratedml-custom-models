@@ -250,3 +250,17 @@ def test_misses_are_attributed_to_model_switches_and_prompt_changes(tmp_path):
     c = summarize([s])["cache"]["misses_by_cause"]
     assert c["model switched"]["requests"] == 1
     assert c["tools, instructions or date changed"]["requests"] == 1
+
+
+def test_upgrades_and_effort_changes_are_attributed(tmp_path):
+    rows = [assistant(f"m{i}", 10_000 + i * 1_000, 0, []) for i in range(3)]
+    rows[0]["version"] = rows[1]["version"] = "2.1.0"
+    rows[2]["version"] = "2.1.0"
+    rows[0]["effort"], rows[1]["effort"] = "high", "high"
+    rows[2]["effort"] = "low"
+    rows[1]["version"] = "2.2.0"
+    rows[2]["version"] = "2.2.0"
+    s = load_session(write(tmp_path, rows))
+    c = summarize([s])["cache"]["misses_by_cause"]
+    assert c["Claude Code upgraded"]["requests"] == 1
+    assert c["effort or fast mode changed"]["requests"] == 1
