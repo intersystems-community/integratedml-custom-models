@@ -570,6 +570,9 @@ def summarize(sessions: Sequence[Session]) -> dict:
         "context_p99": pct(0.99),
         "context_max": ctx[-1],
         "requests_over_1m": sum(c > 1_000_000 for c in ctx),
+        "start_prompt_p50": sorted(s.requests[0].context for s in sessions)[len(sessions) // 2],
+        "start_prompt_max": max(s.requests[0].context for s in sessions),
+        "share_of_requests_over_200k": sum(c > 200_000 for c in ctx) / max(1, len(ctx)),
         "multi_iteration_requests": sum(r.iterations > 1 for r in reqs),
         "resets": sum(r.reset for r in reqs),
         "cache_misses": sum(r.cold for r in reqs),
@@ -860,6 +863,11 @@ def main(argv: Optional[List[str]] = None) -> dict:
             f"p99 {d['context_p99']:,}  max {d['context_max']:,}"
         )
         print(f"  requests over 1M tokens: {d['requests_over_1m']}")
+        print(
+            f"  prompt size at the first request of a session: median "
+            f"{d['start_prompt_p50']:,}, max {d['start_prompt_max']:,}"
+        )
+        print(f"  share of requests with a prompt over 200k: {d['share_of_requests_over_200k']:.0%}")
         print(f"  requests with several server-side iterations: {d['multi_iteration_requests']}")
         print(f"  context resets (compaction or restart): {d['resets']}")
         print(f"  requests that missed the cache: {d['cache_misses']}")
