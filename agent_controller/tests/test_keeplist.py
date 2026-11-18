@@ -54,8 +54,9 @@ def test_settings_and_conditions(tmp_path):
     install_keeplist(tmp_path)
     merged = json.loads((tmp_path / ".claude" / "settings.json").read_text())
     assert "Stop" in merged["hooks"] and "PreCompact" in merged["hooks"]
-    assert split_condition({"A": "1"}) == ({"A": "1"}, False)
-    assert split_condition({"env": {"A": "1"}, "keeplist": True}) == ({"A": "1"}, True)
+    assert split_condition({"A": "1"}) == ({"A": "1"}, False, False)
+    assert split_condition({"env": {"A": "1"}, "keeplist": True}) == ({"A": "1"}, True, False)
+    assert split_condition({"compact_each_phase": True}) == ({}, False, True)
 
 
 def test_generated_task_fails_until_fixed(tmp_path):

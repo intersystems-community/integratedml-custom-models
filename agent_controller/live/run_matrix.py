@@ -44,11 +44,34 @@ def task_prompts(task: dict) -> List[str]:
     return [(repo / f).read_text() for f in files]
 
 
+OPTIONS = ("env", "keeplist", "compact_each_phase")
+
+
 def split_condition(spec) -> tuple:
-    """A condition is either a dict of env vars, or {"env": {...}, "keeplist": bool}."""
-    if isinstance(spec, dict) and ("env" in spec or "keeplist" in spec):
-        return dict(spec.get("env") or {}), bool(spec.get("keeplist"))
-    return dict(spec or {}), False
+    """A condition is either a dict of env vars, or
+    {"env": {...}, "keeplist": bool, "compact_each_phase": bool}."""
+    if isinstance(spec, dict) and any(k in spec for k in OPTIONS):
+        return (dict(spec.get("env") or {}), bool(spec.get("keeplist")),
+                bool(spec.get("compact_each_phase")))
+    return dict(spec or {}), False, False
+
+
+def compaction_markers(path: Optional[Path]) -> int:
+    """Compactions recorded in a transcript: summary rows or compact system events."""
+    if path is None or not path.exists():
+        return 0
+    n = 0
+    with open(path) as f:
+        for line in f:
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if row.get("isCompactSummary"):
+                n += 1
+            elif row.get("type") == "system" and "compact" in str(row.get("subtype", "")).lower():
+                n += 1
+    return n
 
 
 def install_keeplist(tree: Path) -> None:
@@ -101,16 +124,20 @@ def transcript_stats(path: Optional[Path]) -> Dict[str, float]:
 
 
 def run_one(task: dict, condition: str, spec, repeat: int, args) -> dict:
-    env_extra, keeplist = split_condition(spec)
+    env_extra, keeplist, compact_each = split_condition(spec)
     repo = Path(os.path.expanduser(task["repo"])).resolve()
     work = Path(tempfile.mkdtemp(prefix=f"ccrun-{task['name']}-{condition}-"))
     tree = work / "repo"
     record = {"task": task["name"], "condition": condition, "repeat": repeat,
-              "env": env_extra, "keeplist": keeplist, "started": time.time()}
+              "env": env_extra, "keeplist": keeplist, "compact_each_phase": compact_each,
+              "started": time.time()}
     prompts = task_prompts(task)
     if args.dry_run:
-        cmds = [claude_command(task, args, p, None if i == 0 else "<session_id>")
-                for i, p in enumerate(prompts)]
+        cmds = []
+        for i, p in enumerate(prompts):
+            cmds.append(claude_command(task, args, p, None if i == 0 else "<session_id>"))
+            if compact_each and i < len(prompts) - 1:
+                cmds.append(claude_command(task, args, "/compact", "<session_id>"))
         record["command"] = "\n   ".join(" ".join(shlex.quote(c) for c in cmd) for cmd in cmds)
         record["worktree"] = f"git -C {repo} worktree add --detach {tree} {task.get('ref', 'HEAD')}"
         shutil.rmtree(work, ignore_errors=True)
@@ -145,9 +172,29 @@ def run_one(task: dict, condition: str, spec, repeat: int, args) -> dict:
             turns += res.get("num_turns") or 0
             if code != 0 or not session:
                 break
+            if compact_each and i < len(prompts) - 1:
+                # force a summary between phases: the "summarize sooner" policy
+                ccmd = claude_command(task, args, "/compact", session)
+                try:
+                    cp = subprocess.run(ccmd, cwd=tree, env=env, capture_output=True, text=True,
+                                        timeout=600)
+                    cout, ccode = cp.stdout, cp.returncode
+                except subprocess.TimeoutExpired:
+                    cout, ccode = "", "timeout"
+                try:
+                    cres = json.loads(cout.strip().splitlines()[-1]) if cout.strip() else {}
+                except json.JSONDecodeError:
+                    cres = {}
+                phases.append({"compact": True, "exit": ccode,
+                               "session_id": cres.get("session_id"),
+                               "cost_usd": cres.get("total_cost_usd"),
+                               "result": str(cres.get("result", ""))[:200]})
+                session = cres.get("session_id") or session
+                cost += cres.get("total_cost_usd") or 0.0
         record["seconds"] = time.time() - t0
         record["phases"] = phases
-        record["phases_completed"] = sum(1 for ph in phases if ph["exit"] == 0)
+        record["phases_completed"] = sum(1 for ph in phases
+                                         if ph["exit"] == 0 and not ph.get("compact"))
         record["claude_exit"] = phases[-1]["exit"] if phases else None
         record["session_id"] = session
         record["cost_usd"] = cost
@@ -165,8 +212,12 @@ def run_one(task: dict, condition: str, spec, repeat: int, args) -> dict:
         state = tree / ".keeplist" / "state.json"
         if state.exists():
             record["keeplist_state"] = json.loads(state.read_text())
+            record["hook_compactions"] = record["keeplist_state"].get("compactions", 0)
         if record["session_id"]:
             record.update(transcript_stats(find_transcript(record["session_id"])))
+        ids = {ph.get("session_id") for ph in phases if ph.get("session_id")}
+        record["compaction_markers"] = max(
+            [compaction_markers(find_transcript(i)) for i in ids] or [0])
     finally:
         if not args.keep_worktrees:
             subprocess.run(["git", "-C", str(repo), "worktree", "remove", "--force", str(tree)],
@@ -188,7 +239,8 @@ def summarize(rows: List[dict]) -> str:
             continue
         cost = [r["cost_usd"] for r in done if r.get("cost_usd") is not None]
         peak = [r["peak_context"] for r in done if "peak_context" in r]
-        comp = sum(r.get("compactions", 0) for r in done)
+        comp = sum(max(r.get("compactions", 0), r.get("compaction_markers", 0),
+                       r.get("hook_compactions", 0)) for r in done)
         scores = [r["score"] for r in done if isinstance(r.get("score"), dict)]
         tp = sum(bool(s.get("tests_pass")) for s in scores)
         rec = [s["changes_recall"] for s in scores if s.get("changes_recall") is not None]
@@ -235,7 +287,8 @@ def main(argv: Optional[List[str]] = None) -> List[dict]:
                 rows.append(rec)
                 if args.dry_run:
                     print(f"[{task['name']} / {cond} / {rep}]")
-                    print("  env:", rec["env"] or "(none)", "| keep-list hook:", rec["keeplist"])
+                    print("  env:", rec["env"] or "(none)", "| keep-list hook:", rec["keeplist"],
+                          "| compact each phase:", rec["compact_each_phase"])
                     print("  ", rec["worktree"])
                     print("  ", rec["command"])
                 else:

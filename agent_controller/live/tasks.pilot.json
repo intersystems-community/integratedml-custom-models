@@ -1,5 +1,5 @@
 {
-  "_comment": "Generate the repos first (delete old ones; the generator refuses to overwrite): python -m agent_controller.live.make_task_repo ~/ccruns/bugs-a --seed 1  (and bugs-b --seed 2). Each task is 4 prompts in one session; compact-early compacts at about 60k tokens.",
+  "_comment": "Generate the repos first (delete old ones; the generator refuses to overwrite): python -m agent_controller.live.make_task_repo ~/ccruns/bugs-a --seed 1  (and bugs-b --seed 2). Each task is 4 prompts in one session; the compact conditions run /compact between phases.",
   "tasks": [
     {
       "name": "bugs-a",
@@ -30,17 +30,11 @@
   ],
   "conditions": {
     "default": {},
-    "compact-early": {
-      "env": {
-        "CLAUDE_CODE_AUTO_COMPACT_WINDOW": "100000",
-        "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "60"
-      }
+    "compact-each-phase": {
+      "compact_each_phase": true
     },
-    "compact-early+keeplist": {
-      "env": {
-        "CLAUDE_CODE_AUTO_COMPACT_WINDOW": "100000",
-        "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "60"
-      },
+    "compact-each-phase+keeplist": {
+      "compact_each_phase": true,
       "keeplist": true
     }
   }

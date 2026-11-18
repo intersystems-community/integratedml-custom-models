@@ -194,12 +194,14 @@ python -m agent_controller.live.run_matrix agent_controller/live/tasks.pilot.jso
 Each task is four prompts resumed in one session (`--resume`): the
 constraints come only in the first, and CHANGES.md for all phases only in the
 last, so context builds up and early details have to survive compaction. The
-pilot is 2 tasks x 3 conditions (default; compact early, at about 60k tokens,
-via `CLAUDE_CODE_AUTO_COMPACT_WINDOW=100000` and
-`CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=60`; the same with the keep-list), one run
-each, capped at $10 per prompt. Runs spend real
-money and let Claude Code run Bash inside the worktree. Your own global hooks
-and settings apply to every condition alike.
+pilot is 2 tasks x 3 conditions: default; `/compact` run between phases; the
+same with the keep-list. One run each, capped at $10 per prompt.
+
+Compactions are counted three ways: a drop in prompt size in the transcript,
+compaction markers in the transcript, and the keep-list hook's own counter.
+An earlier attempt to trigger compaction with
+`CLAUDE_CODE_AUTO_COMPACT_WINDOW=100000` and `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=60`
+produced no compactions in headless runs, at peaks of 85-93k tokens.
 
 `sawtooth.py` plots one session's prompt size and estimates what compacting at
 a lower threshold would have cost.
