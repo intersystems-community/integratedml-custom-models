@@ -283,11 +283,11 @@ def test_compaction_what_if(tmp_path):
     from agent_controller.sawtooth import compacted, svg_plot
 
     rows = [assistant(f"m{i}", 10_000 + i * 20_000, 10_000 + (i - 1) * 20_000 if i else 0, [])
-            for i in range(20)]
+            for i in range(60)]
     s = load_session(write(tmp_path, rows))
     never = compacted(s, float("inf"))
     assert never["cost"] == pytest.approx(sum(r.actual_cost for r in s.requests))
-    early = compacted(s, 100_000)
-    assert early["compactions"] >= 2 and max(early["series"]) <= 130_000
+    early = compacted(s, 400_000)
+    assert early["compactions"] >= 2 and max(early["series"]) <= 430_000
     assert early["cost"] < never["cost"]
     assert svg_plot(s).startswith("<svg")
