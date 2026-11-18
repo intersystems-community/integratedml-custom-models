@@ -161,26 +161,43 @@ context there and the hindsight reference saved 8.5%, with no later use
 detected. That session is not representative of a long coding run; the tool
 needs real ones before the numbers mean anything.
 
-## Live runs: does earlier compaction keep answers as good?
+## Live runs: does a keep-list make earlier compaction safe?
 
-`live/run_matrix.py` runs the same long coding tasks under different context
-policies with Claude Code headless (`claude -p`), checks each result with the
-task's own test command, and records the cost Claude Code reports plus peak
-context and compactions from the run's transcript. Each run gets a fresh git
-worktree at a fixed ref; conditions are interleaved so drift over the day hits
-all of them. Conditions are environment settings, for example
-`CLAUDE_CODE_AUTO_COMPACT_WINDOW=200000` (documented range 100k to 1M).
+Three pieces in `live/`:
+
+- `make_task_repo.py` generates a long bug-fixing task: a Python package with
+  planted bugs in `app/rules/`, failing tests that point at callers in other
+  modules, constraints stated up front (don't touch tests, keep signatures,
+  Python 3.8, no new imports), and a final `CHANGES.md` listing every fix.
+  `check.py` scores it: tests pass, constraints kept, and CHANGES.md recall,
+  which is what compaction is most likely to lose. The answer key is written
+  next to the repo, not inside it.
+- `keeplist_hook.py` is the controller, version 0 with fixed rules. As a
+  Claude Code hook it records the task, the user's constraints, files changed
+  and the latest test result, and at each compaction hands that list to the
+  summarizer (PreCompact) and re-injects it into the fresh window
+  (SessionStart, source "compact").
+- `run_matrix.py` runs each task under each condition with `claude -p` in a
+  fresh git worktree, installs the hook only for keep-list conditions, runs the
+  check, and records the score, the cost Claude Code reports, peak context and
+  compactions.
+
+Pilot, from the repository root:
 
 ```bash
-cp agent_controller/live/tasks.example.json tasks.json   # edit: your repos, prompts, checks
-python -m agent_controller.live.run_matrix tasks.json --dry-run
-python -m agent_controller.live.run_matrix tasks.json --only-task NAME --budget-usd 10
+python -m agent_controller.live.make_task_repo ~/ccruns/bugs-a --seed 1
+python -m agent_controller.live.make_task_repo ~/ccruns/bugs-b --seed 2
+python -m agent_controller.live.run_matrix agent_controller/live/tasks.pilot.json --dry-run
+python -m agent_controller.live.run_matrix agent_controller/live/tasks.pilot.json --budget-usd 10
 ```
 
-Runs spend real money and run tools on your machine with the allowed tool
-list (Bash included by default), inside the worktree. `sawtooth.py` plots one
-session's prompt size and estimates what compacting at a lower threshold would
-have cost.
+The pilot is 2 tasks x 3 conditions (default; compact at 100k; compact at
+100k with the keep-list), one run each, capped at $10 per run. Runs spend real
+money and let Claude Code run Bash inside the worktree. Your own global hooks
+and settings apply to every condition alike.
+
+`sawtooth.py` plots one session's prompt size and estimates what compacting at
+a lower threshold would have cost.
 
 ## Files
 
@@ -193,6 +210,8 @@ have cost.
 | `gate.py` | Features, keep-score network, imitation and outcome-driven training |
 | `run_s1.py` | Trains the gate and its ablations and prints the S1 comparison |
 | `replay_transcript.py` | Replays session transcripts under context eviction policies |
+| `sawtooth.py` | Prompt-size plot and compaction-threshold what-if |
+| `live/` | Task generator, keep-list hook and live-run harness |
 | `results_s0.json`, `results_s1.json` | Outputs of the two runs, including B2's tuned weights |
 
 ## Next

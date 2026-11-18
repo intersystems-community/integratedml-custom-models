@@ -1,0 +1,26 @@
+{
+  "_comment": "Generate the repos first: python -m agent_controller.live.make_task_repo ~/ccruns/bugs-a --seed 1  (and bugs-b --seed 2)",
+  "tasks": [
+    {
+      "name": "bugs-a",
+      "repo": "~/ccruns/bugs-a",
+      "ref": "HEAD",
+      "prompt_file": "PROMPT.md",
+      "check": "python3 check.py ~/ccruns/bugs-a.bugs.json",
+      "timeout_minutes": 90
+    },
+    {
+      "name": "bugs-b",
+      "repo": "~/ccruns/bugs-b",
+      "ref": "HEAD",
+      "prompt_file": "PROMPT.md",
+      "check": "python3 check.py ~/ccruns/bugs-b.bugs.json",
+      "timeout_minutes": 90
+    }
+  ],
+  "conditions": {
+    "default": {},
+    "compact-100k": {"env": {"CLAUDE_CODE_AUTO_COMPACT_WINDOW": "100000"}},
+    "compact-100k+keeplist": {"env": {"CLAUDE_CODE_AUTO_COMPACT_WINDOW": "100000"}, "keeplist": true}
+  }
+}

@@ -27,14 +27,42 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from ..replay_transcript import load_session
+from .keeplist_hook import settings_for
+
+HOOK = Path(__file__).resolve().with_name("keeplist_hook.py")
 
 PROJECTS = Path.home() / ".claude" / "projects"
 DEFAULT_TOOLS = "Read Edit Write Glob Grep Bash"
 
 
+def task_prompt(task: dict) -> str:
+    if "prompt" in task:
+        return task["prompt"]
+    repo = Path(os.path.expanduser(task["repo"]))
+    return (repo / task["prompt_file"]).read_text()
+
+
+def split_condition(spec) -> tuple:
+    """A condition is either a dict of env vars, or {"env": {...}, "keeplist": bool}."""
+    if isinstance(spec, dict) and ("env" in spec or "keeplist" in spec):
+        return dict(spec.get("env") or {}), bool(spec.get("keeplist"))
+    return dict(spec or {}), False
+
+
+def install_keeplist(tree: Path) -> None:
+    """Register the keep-list hook in the worktree's project settings."""
+    settings = tree / ".claude" / "settings.json"
+    current = json.loads(settings.read_text()) if settings.exists() else {}
+    hooks = current.setdefault("hooks", {})
+    for event, groups in settings_for(str(HOOK))["hooks"].items():
+        hooks.setdefault(event, []).extend(groups)
+    settings.parent.mkdir(parents=True, exist_ok=True)
+    settings.write_text(json.dumps(current, indent=2))
+
+
 def claude_command(task: dict, args) -> List[str]:
     cmd = [
-        args.claude, "-p", task["prompt"],
+        args.claude, "-p", task_prompt(task),
         "--output-format", "json",
         "--max-turns", str(task.get("max_turns", args.max_turns)),
         "--max-budget-usd", str(task.get("budget_usd", args.budget_usd)),
@@ -68,12 +96,13 @@ def transcript_stats(path: Optional[Path]) -> Dict[str, float]:
     }
 
 
-def run_one(task: dict, condition: str, env_extra: Dict[str, str], repeat: int, args) -> dict:
+def run_one(task: dict, condition: str, spec, repeat: int, args) -> dict:
+    env_extra, keeplist = split_condition(spec)
     repo = Path(os.path.expanduser(task["repo"])).resolve()
     work = Path(tempfile.mkdtemp(prefix=f"ccrun-{task['name']}-{condition}-"))
     tree = work / "repo"
     record = {"task": task["name"], "condition": condition, "repeat": repeat,
-              "env": env_extra, "started": time.time()}
+              "env": env_extra, "keeplist": keeplist, "started": time.time()}
     cmd = claude_command(task, args)
     if args.dry_run:
         record["command"] = " ".join(shlex.quote(c) for c in cmd)
@@ -83,6 +112,8 @@ def run_one(task: dict, condition: str, env_extra: Dict[str, str], repeat: int, 
     subprocess.run(["git", "-C", str(repo), "worktree", "add", "--detach", str(tree),
                     task.get("ref", "HEAD")], check=True, capture_output=True)
     try:
+        if keeplist:
+            install_keeplist(tree)
         env = {**os.environ, **env_extra}
         timeout = 60 * task.get("timeout_minutes", 90)
         t0 = time.time()
@@ -106,6 +137,15 @@ def run_one(task: dict, condition: str, env_extra: Dict[str, str], repeat: int, 
         check = subprocess.run(task["check"], shell=True, cwd=tree, capture_output=True,
                                text=True, timeout=60 * 20)
         record["passed"] = check.returncode == 0
+        for line in reversed(check.stdout.strip().splitlines()):
+            try:
+                record["score"] = json.loads(line)
+                break
+            except json.JSONDecodeError:
+                continue
+        state = tree / ".keeplist" / "state.json"
+        if state.exists():
+            record["keeplist_state"] = json.loads(state.read_text())
         if record["session_id"]:
             record.update(transcript_stats(find_transcript(record["session_id"])))
     finally:
@@ -120,8 +160,9 @@ def summarize(rows: List[dict]) -> str:
     by: Dict[str, List[dict]] = {}
     for r in rows:
         by.setdefault(r["condition"], []).append(r)
-    lines = ["| condition | runs | passed | mean cost (USD) | mean peak context | compactions |",
-             "|---|---|---|---|---|---|"]
+    lines = ["| condition | runs | passed | tests pass | CHANGES.md recall | mean cost (USD) "
+             "| mean peak context | compactions |",
+             "|---|---|---|---|---|---|---|---|"]
     for cond, rs in by.items():
         done = [r for r in rs if "passed" in r]
         if not done:
@@ -129,8 +170,13 @@ def summarize(rows: List[dict]) -> str:
         cost = [r["cost_usd"] for r in done if r.get("cost_usd") is not None]
         peak = [r["peak_context"] for r in done if "peak_context" in r]
         comp = sum(r.get("compactions", 0) for r in done)
+        scores = [r["score"] for r in done if isinstance(r.get("score"), dict)]
+        tp = sum(bool(s.get("tests_pass")) for s in scores)
+        rec = [s["changes_recall"] for s in scores if s.get("changes_recall") is not None]
+        recall = f"{sum(rec) / len(rec):.2f}" if rec else "n/a"
         lines.append(
-            f"| {cond} | {len(done)} | {sum(r['passed'] for r in done)} "
+            f"| {cond} | {len(done)} | {sum(r['passed'] for r in done)} | {tp}/{len(scores)} "
+            f"| {recall} "
             f"| {sum(cost) / len(cost) if cost else float('nan'):.2f} "
             f"| {sum(peak) / len(peak) if peak else float('nan'):,.0f} | {comp} |"
         )
@@ -170,7 +216,7 @@ def main(argv: Optional[List[str]] = None) -> List[dict]:
                 rows.append(rec)
                 if args.dry_run:
                     print(f"[{task['name']} / {cond} / {rep}]")
-                    print("  env:", env_extra or "(none)")
+                    print("  env:", rec["env"] or "(none)", "| keep-list hook:", rec["keeplist"])
                     print("  ", rec["worktree"])
                     print("  ", rec["command"])
                 else:

@@ -24,4 +24,4 @@ def test_summary_table():
         {"condition": "a", "passed": False, "cost_usd": 4.0, "peak_context": 500_000, "compactions": 1},
     ]
     table = summarize(rows)
-    assert "| a | 2 | 1 | 3.00 | 400,000 | 1 |" in table
+    assert "| a | 2 | 1 | 0/0 | n/a | 3.00 | 400,000 | 1 |" in table
