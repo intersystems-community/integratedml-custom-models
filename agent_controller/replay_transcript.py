@@ -28,7 +28,7 @@ from __future__ import annotations
 import argparse
 import json
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Sequence, Set
 
@@ -696,12 +696,13 @@ def cache_breakdown(sessions: Sequence[Session], actual: float) -> dict:
                 continue
             size = next(lab for limit, lab in SIZES if prev.context < limit)
             size_all[size] += 1
-            missed = max(0, prev.context - r.cache_read)
-            if missed < 0.1 * prev.context:
+            extra = miss_extra(prev, r)
+            if extra == 0:
                 continue
+            missed = max(0, prev.context - r.cache_read)
             cause = miss_cause(prev, r)
             buckets[cause]["requests"] += 1
-            buckets[cause]["extra_cost"] += missed * (r.write_price - READ)
+            buckets[cause]["extra_cost"] += extra
             if cause == "none of these, pause under 5 min":
                 frac = missed / prev.context
                 k = (
@@ -711,7 +712,7 @@ def cache_breakdown(sessions: Sequence[Session], actual: float) -> dict:
                 )
                 depth[k] += 1
                 size_n[size] += 1
-                depth_cost[k] += missed * (r.write_price - READ) / max(1e-9, actual)
+                depth_cost[k] += extra / max(1e-9, actual)
             if cause == "none of these, pause 5 to 60 min":
                 recovered += missed * (WRITE_1H - READ)
     for b in buckets.values():
@@ -730,6 +731,25 @@ def cache_breakdown(sessions: Sequence[Session], actual: float) -> dict:
     }
 
 
+def miss_extra(prev: Request, r: Request) -> float:
+    """Extra input cost of re-sending a prefix that should have been read from
+    cache: zero unless at least 10% of the previous prompt was not read.
+
+    Requests that neither read nor wrote the cache had caching off, which is
+    not a miss. Missed tokens are priced at what was actually paid for them
+    (written, or sent uncached) minus the read price.
+    """
+    created = max(0, r.context - r.cache_read - r.plain)
+    if r.cache_read == 0 and created == 0:
+        return 0.0
+    missed = max(0, prev.context - r.cache_read)
+    if missed < 0.1 * prev.context:
+        return 0.0
+    written = min(missed, created)
+    plain = min(missed - written, r.plain)
+    return written * (r.write_price - READ) + plain * (PLAIN - READ)
+
+
 def by_week(sessions: Sequence[Session]) -> List[dict]:
     """Per ISO week: requests, share of cache writes at the 1-hour price, and
     the extra input cost of cache misses as a share of that week's input cost."""
@@ -738,7 +758,7 @@ def by_week(sessions: Sequence[Session]) -> List[dict]:
         for prev, r in zip([None] + s.requests[:-1], s.requests):
             if r.time is None:
                 continue
-            y, w, _ = datetime.utcfromtimestamp(r.time).isocalendar()
+            y, w, _ = datetime.fromtimestamp(r.time, timezone.utc).isocalendar()
             k = f"{y}-W{w:02d}"
             b = weeks.setdefault(k, {"week": k, "requests": 0, "cost": 0.0,
                                      "written": 0.0, "written_1h": 0.0, "miss_cost": 0.0})
@@ -748,9 +768,7 @@ def by_week(sessions: Sequence[Session]) -> List[dict]:
             b["written"] += created
             b["written_1h"] += created * (r.write_price - WRITE) / (WRITE_1H - WRITE)
             if prev is not None and not r.reset:
-                missed = max(0, prev.context - r.cache_read)
-                if missed >= 0.1 * prev.context:
-                    b["miss_cost"] += missed * (r.write_price - READ)
+                b["miss_cost"] += miss_extra(prev, r)
     out = []
     for k in sorted(weeks):
         b = weeks[k]
@@ -761,6 +779,30 @@ def by_week(sessions: Sequence[Session]) -> List[dict]:
             "miss_share_of_input_cost": b["miss_cost"] / max(1e-9, b["cost"]),
         })
     return out
+
+
+def before_after(sessions: Sequence[Session]) -> Optional[dict]:
+    """Cost-weighted miss share before and after the first week in which at
+    least 90% of cache writes used the one-hour lifetime."""
+    weeks = by_week(sessions)
+    first = next((b["week"] for b in weeks if b["one_hour_write_share"] >= 0.9), None)
+    if first is None or first == weeks[0]["week"]:
+        return None
+    sums = {"before": [0.0, 0.0], "after": [0.0, 0.0]}
+    for s in sessions:
+        for prev, r in zip([None] + s.requests[:-1], s.requests):
+            if r.time is None:
+                continue
+            y, w, _ = datetime.fromtimestamp(r.time, timezone.utc).isocalendar()
+            side = "after" if f"{y}-W{w:02d}" >= first else "before"
+            sums[side][1] += r.actual_cost
+            if prev is not None and not r.reset:
+                sums[side][0] += miss_extra(prev, r)
+    return {
+        "first_week": first,
+        "before": sums["before"][0] / max(1e-9, sums["before"][1]),
+        "after": sums["after"][0] / max(1e-9, sums["after"][1]),
+    }
 
 
 def main(argv: Optional[List[str]] = None) -> dict:
@@ -862,6 +904,14 @@ def main(argv: Optional[List[str]] = None) -> dict:
             print(
                 f"| {b['week']} | {b['requests']} | {b['one_hour_write_share']:.0%} "
                 f"| {b['miss_share_of_input_cost']:.1%} |"
+            )
+        split = before_after(sessions)
+        if split:
+            res["before_after"] = split
+            print(
+                f"\nCache misses as a share of input cost: {split['before']:.1%} before "
+                f"{split['first_week']} (mostly 5-minute writes) vs {split['after']:.1%} from "
+                f"then on (at least 90% one-hour writes), cost-weighted."
             )
     if args.out:
         args.out.write_text(json.dumps(res, indent=2))

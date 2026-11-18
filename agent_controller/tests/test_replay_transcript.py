@@ -264,3 +264,16 @@ def test_upgrades_and_effort_changes_are_attributed(tmp_path):
     c = summarize([s])["cache"]["misses_by_cause"]
     assert c["Claude Code upgraded"]["requests"] == 1
     assert c["effort or fast mode changed"]["requests"] == 1
+
+
+def test_requests_without_caching_are_not_misses(tmp_path):
+    rows = []
+    for i, ctx in enumerate((10_000, 11_000, 12_000)):
+        row = assistant(f"m{i}", ctx, 0, [])
+        row["message"]["usage"].update(
+            input_tokens=ctx, cache_creation_input_tokens=0, cache_read_input_tokens=0
+        )
+        rows.append(row)
+    s = load_session(write(tmp_path, rows))
+    misses = summarize([s])["cache"]["misses_by_cause"]
+    assert sum(b["requests"] for b in misses.values()) == 0
