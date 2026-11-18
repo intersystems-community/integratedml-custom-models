@@ -132,6 +132,10 @@ python -m agent_controller.replay_transcript ~/.claude/projects/*/*.jsonl
 ```
 
 It runs locally on the standard library and prints aggregate numbers only.
+Add `--diagnose` for parsing checks (prompt size percentiles, resets, cache
+misses) and `--breakdown` for where context comes from (tool results, your
+messages, the agent's text, tool calls and thinking, attachments) and how much
+input cost cache misses add, grouped by the pause before the request.
 
 - **Cost model.** Context sizes come from the recorded token usage. Prompt
   caching is modelled: an unchanged prefix is read at 0.1x, and everything

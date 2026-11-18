@@ -28,6 +28,7 @@ from __future__ import annotations
 import argparse
 import json
 from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Sequence, Set
 
@@ -70,6 +71,23 @@ class Request:
     items: List[Item] = field(default_factory=list)  # new tool results
     reset: bool = False  # context shrank: compaction, context editing or a restart
     cold: bool = False  # cache was not reused
+    time: Optional[float] = None  # seconds since the epoch, if recorded
+    # new tokens since the previous request, by where they came from
+    composition: Dict[str, int] = field(default_factory=dict)
+
+
+# Where new context comes from. Sizes other than tool results are estimated
+# from text length and scaled to fit the recorded growth.
+SOURCES = (
+    "tool results",
+    "your messages",
+    "attachments and reminders",
+    "agent text",
+    "agent tool calls",
+    "agent thinking",
+    "unattributed",
+    "start or after a reset",
+)
 
 
 @dataclass
@@ -127,6 +145,27 @@ def _usage_cost(u: dict) -> tuple:
     return read * READ + write_cost + plain * PLAIN, price
 
 
+def _timestamp(value) -> Optional[float]:
+    if not isinstance(value, str):
+        return None
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00")).timestamp()
+    except ValueError:
+        return None
+
+
+def _compose(results: int, other: int, chars: Dict[str, int]) -> Dict[str, int]:
+    """Split a request's new tokens by source, scaling text estimates to fit."""
+    out = {"tool results": results}
+    est = {k: int(v / CHARS_PER_TOKEN) for k, v in chars.items() if v}
+    total = sum(est.values())
+    scale = min(1.0, other / total) if total else 0.0
+    for k, v in est.items():
+        out[k] = int(v * scale)
+    out["unattributed"] = other - sum(v for k, v in out.items() if k != "tool results")
+    return out
+
+
 def load_session(path: Path) -> Session:
     """Turn a transcript into requests, tool-result items and later-use marks."""
     rows = []
@@ -136,7 +175,9 @@ def load_session(path: Path) -> Session:
                 row = json.loads(line)
             except json.JSONDecodeError:
                 continue
-            if row.get("type") in ("user", "assistant") and not row.get("isSidechain"):
+            if row.get("isSidechain"):
+                continue
+            if row.get("type") in ("user", "assistant", "attachment"):
                 rows.append(row)
 
     requests: List[Request] = []
@@ -146,15 +187,33 @@ def load_session(path: Path) -> Session:
     pending: List[Item] = []  # results waiting for the next request
     authored: Set[str] = set()  # lines the agent has written itself
     latest_read: Dict[str, Item] = {}
+    chars: Dict[str, int] = {}  # other new content waiting for the next request
+
+    def add(source: str, texts) -> None:
+        chars[source] = chars.get(source, 0) + sum(len(t) for t in texts)
 
     for row in rows:
         msg = row.get("message") or {}
         content = msg.get("content")
         blocks = content if isinstance(content, list) else []
 
+        if row["type"] == "attachment":
+            add(
+                "attachments and reminders",
+                [c.get("content", "") for c in row.get("rendered") or []
+                 if isinstance(c, dict) and isinstance(c.get("content"), str)],
+            )
+            continue
+
         if row["type"] == "user":
+            if isinstance(content, str):
+                add("your messages", [content])
             for b in blocks:
-                if not isinstance(b, dict) or b.get("type") != "tool_result":
+                if not isinstance(b, dict):
+                    continue
+                if b.get("type") == "text":
+                    add("your messages", [b.get("text", "")])
+                if b.get("type") != "tool_result":
                     continue
                 call = calls.get(b.get("tool_use_id"), {})
                 texts, tokens = _result_text_and_tokens(b.get("content"))
@@ -203,8 +262,10 @@ def load_session(path: Path) -> Session:
             # over from the recorded size.
             r.reset = bool(requests) and ctx < prev
             r.cold = bool(requests) and not r.reset and read < 0.5 * prev
+            r.time = _timestamp(row.get("timestamp"))
             if r.reset:
                 pending = []  # whatever was pending is inside the summary now
+                chars = {}
             delta = max(0, ctx - (0 if r.reset else prev))
             estimated = sum(i.tokens for i in pending)
             if estimated > delta and estimated > 0:  # calibrate to real usage
@@ -212,6 +273,11 @@ def load_session(path: Path) -> Session:
                     i.tokens = int(i.tokens * delta / estimated)
                 estimated = sum(i.tokens for i in pending)
             r.fixed = ctx if r.reset else delta - estimated
+            if r.reset or not requests:
+                r.composition = {"start or after a reset": ctx}
+            else:
+                r.composition = _compose(estimated, r.fixed, chars)
+            chars = {}
             r.items = pending
             for i in pending:
                 i.born = r.index
@@ -240,8 +306,12 @@ def load_session(path: Path) -> Session:
                         src.uses.append(step)
                     if src.superseded_at is None:
                         src.superseded_at = step + 1
+                add("agent tool calls", _strings(b.get("input")))
             elif b.get("type") == "text":
                 out_texts.append(b.get("text", ""))
+                add("agent text", [b.get("text", "")])
+            elif b.get("type") in ("thinking", "redacted_thinking"):
+                add("agent thinking", [b.get("thinking") or b.get("data") or ""])
         quoted = _lines(out_texts)
         if quoted:
             for item in items:
@@ -494,6 +564,8 @@ def summarize(sessions: Sequence[Session]) -> dict:
         "reused_share_of_result_tokens": reused / max(1, result_tokens),
         "actual_input_cost": actual,
         "diagnostics": diagnostics,
+        "composition": composition(sessions),
+        "cache": cache_breakdown(sessions, actual),
         "policies": {
             name: {
                 "input_cost": o.cost,
@@ -508,6 +580,59 @@ def summarize(sessions: Sequence[Session]) -> dict:
     }
 
 
+def composition(sessions: Sequence[Session]) -> dict:
+    """Share of new tokens, and of resident context (tokens times the requests
+    they stay in the prompt for), by source. Resident context is what cache
+    reads are paid on."""
+    new = {k: 0 for k in SOURCES}
+    resident = {k: 0 for k in SOURCES}
+    for s in sessions:
+        live = {k: 0 for k in SOURCES}
+        for r in s.requests:
+            if r.reset:
+                live = {k: 0 for k in SOURCES}
+            for k, v in r.composition.items():
+                new[k] += v
+                live[k] += v
+            for k, v in live.items():
+                resident[k] += v
+    n, res = max(1, sum(new.values())), max(1, sum(resident.values()))
+    return {k: {"new": new[k] / n, "resident": resident[k] / res} for k in SOURCES}
+
+
+GAPS = ((300, "under 5 min"), (3600, "5 to 60 min"), (float("inf"), "over 1 hour"))
+
+
+def cache_breakdown(sessions: Sequence[Session], actual: float) -> dict:
+    """Extra input cost from prefixes that should have been cached but were
+    written again, grouped by the pause before the request, plus the cost of
+    requests that follow a reset."""
+    buckets = {label: {"requests": 0, "extra_cost": 0.0} for _, label in GAPS}
+    buckets["no timestamp"] = {"requests": 0, "extra_cost": 0.0}
+    reset_cost = 0.0
+    for s in sessions:
+        for prev, r in zip(s.requests, s.requests[1:]):
+            if r.reset:
+                reset_cost += r.actual_cost
+                continue
+            missed = max(0, prev.context - r.cache_read)
+            if missed < 0.1 * prev.context:
+                continue
+            if r.time is None or prev.time is None:
+                label = "no timestamp"
+            else:
+                gap = r.time - prev.time
+                label = next(lab for limit, lab in GAPS if gap < limit)
+            buckets[label]["requests"] += 1
+            buckets[label]["extra_cost"] += missed * (r.write_price - READ)
+    for b in buckets.values():
+        b["share_of_input_cost"] = b["extra_cost"] / max(1e-9, actual)
+    return {
+        "misses_by_pause": buckets,
+        "reset_requests_share_of_input_cost": reset_cost / max(1e-9, actual),
+    }
+
+
 def main(argv: Optional[List[str]] = None) -> dict:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("transcripts", nargs="+", type=Path)
@@ -515,6 +640,11 @@ def main(argv: Optional[List[str]] = None) -> dict:
     ap.add_argument("--out", type=Path, default=None, help="write summary JSON")
     ap.add_argument(
         "--diagnose", action="store_true", help="print aggregate parsing checks"
+    )
+    ap.add_argument(
+        "--breakdown",
+        action="store_true",
+        help="print where context comes from and what cache misses cost",
     )
     args = ap.parse_args(argv)
 
@@ -557,6 +687,23 @@ def main(argv: Optional[List[str]] = None) -> dict:
         print(f"  context resets (compaction or restart): {d['resets']}")
         print(f"  requests that missed the cache: {d['cache_misses']}")
         print(f"  share of cache writes at the 1-hour price: {d['one_hour_write_share']:.0%}")
+    if args.breakdown:
+        print("\nWhere context comes from (resident = tokens x requests held, "
+              "which is what cache reads are paid on):\n")
+        print("| source | share of new tokens | share of resident context |")
+        print("|---|---|---|")
+        for k, v in res["composition"].items():
+            print(f"| {k} | {v['new']:.0%} | {v['resident']:.0%} |")
+        c = res["cache"]
+        print("\nCache misses (a prefix that should have been cached was written again):\n")
+        print("| pause before the request | requests | extra cost, share of input cost |")
+        print("|---|---|---|")
+        for label, b in c["misses_by_pause"].items():
+            print(f"| {label} | {b['requests']} | {b['share_of_input_cost']:.1%} |")
+        print(
+            f"\nRequests right after a reset: "
+            f"{c['reset_requests_share_of_input_cost']:.1%} of input cost."
+        )
     if args.out:
         args.out.write_text(json.dumps(res, indent=2))
     return res

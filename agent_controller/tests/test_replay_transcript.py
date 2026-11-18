@@ -199,3 +199,37 @@ def test_one_hour_writes_and_server_iterations_are_priced(tmp_path):
     r = s.requests[0]
     assert r.context == 1_500 and r.iterations == 2
     assert r.actual_cost == pytest.approx(1_000 * 2.0 + 1_000 * READ + 500 * WRITE)
+
+
+def test_composition_splits_growth_by_source(tmp_path):
+    rows = [
+        {"type": "user", "message": {"content": "please fix the bug " * 50}},
+        assistant("m0", 10_000, 0, [tool_use("t0", "Bash", command="ls")]),
+        result("t0", "x" * 4_000),
+        assistant("m1", 12_000, 10_000, [{"type": "text", "text": "done " * 200}]),
+        {"type": "user", "message": {"content": "thanks " * 100}},
+        assistant("m2", 13_000, 12_000, []),
+    ]
+    s = load_session(write(tmp_path, rows))
+    first, second, third = (r.composition for r in s.requests)
+    assert first == {"start or after a reset": 10_000}
+    assert second["tool results"] == 1_000 and sum(second.values()) == 2_000
+    assert third["agent text"] == 250 and third["your messages"] == 175
+    assert sum(third.values()) == 1_000
+    shares = summarize([s])["composition"]
+    assert sum(v["new"] for v in shares.values()) == pytest.approx(1.0)
+
+
+def test_cache_misses_are_grouped_by_pause(tmp_path):
+    rows = [
+        assistant("m0", 10_000, 0, []),
+        assistant("m1", 11_000, 10_000, []),
+        assistant("m2", 12_000, 0, []),  # full rewrite after a long pause
+    ]
+    for row, t in zip(rows, ("10:00:00", "10:01:00", "12:00:00")):
+        row["timestamp"] = f"2026-01-01T{t}Z"
+    s = load_session(write(tmp_path, rows))
+    c = summarize([s])["cache"]["misses_by_pause"]
+    assert c["over 1 hour"]["requests"] == 1
+    assert c["under 5 min"]["requests"] == 0
+    assert c["over 1 hour"]["extra_cost"] == pytest.approx(11_000 * (WRITE - READ))
