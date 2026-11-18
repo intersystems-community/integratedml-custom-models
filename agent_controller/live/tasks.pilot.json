@@ -1,26 +1,47 @@
 {
-  "_comment": "Generate the repos first (delete old ones; the generator refuses to overwrite): python -m agent_controller.live.make_task_repo ~/ccruns/bugs-a --seed 1  (and bugs-b --seed 2)",
+  "_comment": "Generate the repos first (delete old ones; the generator refuses to overwrite): python -m agent_controller.live.make_task_repo ~/ccruns/bugs-a --seed 1  (and bugs-b --seed 2). Each task is 4 prompts in one session; compact-early compacts at about 60k tokens.",
   "tasks": [
     {
       "name": "bugs-a",
       "repo": "~/ccruns/bugs-a",
       "ref": "HEAD",
-      "prompt_file": "PROMPT.md",
       "check": "python3 check.py ~/ccruns/bugs-a.bugs.json",
-      "timeout_minutes": 90
+      "timeout_minutes": 45,
+      "prompt_files": [
+        "PROMPT.md",
+        "PHASE2.md",
+        "PHASE3.md",
+        "PHASE4.md"
+      ]
     },
     {
       "name": "bugs-b",
       "repo": "~/ccruns/bugs-b",
       "ref": "HEAD",
-      "prompt_file": "PROMPT.md",
       "check": "python3 check.py ~/ccruns/bugs-b.bugs.json",
-      "timeout_minutes": 90
+      "timeout_minutes": 45,
+      "prompt_files": [
+        "PROMPT.md",
+        "PHASE2.md",
+        "PHASE3.md",
+        "PHASE4.md"
+      ]
     }
   ],
   "conditions": {
     "default": {},
-    "compact-100k": {"env": {"CLAUDE_CODE_AUTO_COMPACT_WINDOW": "100000"}},
-    "compact-100k+keeplist": {"env": {"CLAUDE_CODE_AUTO_COMPACT_WINDOW": "100000"}, "keeplist": true}
+    "compact-early": {
+      "env": {
+        "CLAUDE_CODE_AUTO_COMPACT_WINDOW": "100000",
+        "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "60"
+      }
+    },
+    "compact-early+keeplist": {
+      "env": {
+        "CLAUDE_CODE_AUTO_COMPACT_WINDOW": "100000",
+        "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "60"
+      },
+      "keeplist": true
+    }
   }
 }

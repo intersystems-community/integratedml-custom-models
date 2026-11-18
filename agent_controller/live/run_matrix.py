@@ -35,11 +35,13 @@ PROJECTS = Path.home() / ".claude" / "projects"
 DEFAULT_TOOLS = "Read Edit Write Glob Grep Bash"
 
 
-def task_prompt(task: dict) -> str:
+def task_prompts(task: dict) -> List[str]:
+    """The prompts of a task, in order. Later ones resume the same session."""
     if "prompt" in task:
-        return task["prompt"]
+        return [task["prompt"]]
     repo = Path(os.path.expanduser(task["repo"]))
-    return (repo / task["prompt_file"]).read_text()
+    files = task.get("prompt_files") or [task["prompt_file"]]
+    return [(repo / f).read_text() for f in files]
 
 
 def split_condition(spec) -> tuple:
@@ -60,9 +62,9 @@ def install_keeplist(tree: Path) -> None:
     settings.write_text(json.dumps(current, indent=2))
 
 
-def claude_command(task: dict, args) -> List[str]:
+def claude_command(task: dict, args, prompt: str, resume: Optional[str] = None) -> List[str]:
     cmd = [
-        args.claude, "-p", task_prompt(task),
+        args.claude, "-p", prompt,
         "--output-format", "json",
         "--max-turns", str(task.get("max_turns", args.max_turns)),
         "--max-budget-usd", str(task.get("budget_usd", args.budget_usd)),
@@ -72,6 +74,8 @@ def claude_command(task: dict, args) -> List[str]:
         cmd += ["--model", args.model]
     if args.bare:
         cmd.append("--bare")
+    if resume:
+        cmd += ["--resume", resume]
     return cmd
 
 
@@ -103,9 +107,11 @@ def run_one(task: dict, condition: str, spec, repeat: int, args) -> dict:
     tree = work / "repo"
     record = {"task": task["name"], "condition": condition, "repeat": repeat,
               "env": env_extra, "keeplist": keeplist, "started": time.time()}
-    cmd = claude_command(task, args)
+    prompts = task_prompts(task)
     if args.dry_run:
-        record["command"] = " ".join(shlex.quote(c) for c in cmd)
+        cmds = [claude_command(task, args, p, None if i == 0 else "<session_id>")
+                for i, p in enumerate(prompts)]
+        record["command"] = "\n   ".join(" ".join(shlex.quote(c) for c in cmd) for cmd in cmds)
         record["worktree"] = f"git -C {repo} worktree add --detach {tree} {task.get('ref', 'HEAD')}"
         shutil.rmtree(work, ignore_errors=True)
         return record
@@ -117,23 +123,36 @@ def run_one(task: dict, condition: str, spec, repeat: int, args) -> dict:
         env = {**os.environ, **env_extra}
         timeout = 60 * task.get("timeout_minutes", 90)
         t0 = time.time()
-        try:
-            proc = subprocess.run(cmd, cwd=tree, env=env, capture_output=True, text=True,
-                                  timeout=timeout)
-            out = proc.stdout
-            record["claude_exit"] = proc.returncode
-        except subprocess.TimeoutExpired as e:
-            out = e.stdout.decode() if isinstance(e.stdout, bytes) else (e.stdout or "")
-            record["claude_exit"] = "timeout"
+        session, cost, turns, phases = None, 0.0, 0, []
+        for i, prompt in enumerate(prompts):
+            cmd = claude_command(task, args, prompt, session if i else None)
+            try:
+                proc = subprocess.run(cmd, cwd=tree, env=env, capture_output=True, text=True,
+                                      timeout=timeout)
+                out, code = proc.stdout, proc.returncode
+            except subprocess.TimeoutExpired as e:
+                out = e.stdout.decode() if isinstance(e.stdout, bytes) else (e.stdout or "")
+                code = "timeout"
+            try:
+                res = json.loads(out.strip().splitlines()[-1]) if out.strip() else {}
+            except json.JSONDecodeError:
+                res = {}
+            phases.append({"exit": code, "session_id": res.get("session_id"),
+                           "cost_usd": res.get("total_cost_usd"), "turns": res.get("num_turns"),
+                           "is_error": res.get("is_error")})
+            session = res.get("session_id") or session
+            cost += res.get("total_cost_usd") or 0.0
+            turns += res.get("num_turns") or 0
+            if code != 0 or not session:
+                break
         record["seconds"] = time.time() - t0
-        try:
-            res = json.loads(out.strip().splitlines()[-1]) if out.strip() else {}
-        except json.JSONDecodeError:
-            res = {}
-        record["session_id"] = res.get("session_id")
-        record["cost_usd"] = res.get("total_cost_usd")
-        record["num_turns"] = res.get("num_turns")
-        record["is_error"] = res.get("is_error")
+        record["phases"] = phases
+        record["phases_completed"] = sum(1 for ph in phases if ph["exit"] == 0)
+        record["claude_exit"] = phases[-1]["exit"] if phases else None
+        record["session_id"] = session
+        record["cost_usd"] = cost
+        record["num_turns"] = turns
+        record["is_error"] = any(ph.get("is_error") for ph in phases)
         check = subprocess.run(task["check"], shell=True, cwd=tree, capture_output=True,
                                text=True, timeout=60 * 20)
         record["passed"] = check.returncode == 0

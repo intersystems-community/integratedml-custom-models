@@ -191,8 +191,13 @@ python -m agent_controller.live.run_matrix agent_controller/live/tasks.pilot.jso
 python -m agent_controller.live.run_matrix agent_controller/live/tasks.pilot.json --budget-usd 10
 ```
 
-The pilot is 2 tasks x 3 conditions (default; compact at 100k; compact at
-100k with the keep-list), one run each, capped at $10 per run. Runs spend real
+Each task is four prompts resumed in one session (`--resume`): the
+constraints come only in the first, and CHANGES.md for all phases only in the
+last, so context builds up and early details have to survive compaction. The
+pilot is 2 tasks x 3 conditions (default; compact early, at about 60k tokens,
+via `CLAUDE_CODE_AUTO_COMPACT_WINDOW=100000` and
+`CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=60`; the same with the keep-list), one run
+each, capped at $10 per prompt. Runs spend real
 money and let Claude Code run Bash inside the worktree. Your own global hooks
 and settings apply to every condition alike.
 

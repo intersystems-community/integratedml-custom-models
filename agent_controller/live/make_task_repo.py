@@ -55,11 +55,44 @@ PROMPT = textwrap.dedent("""\
 """)
 
 
+CONSTRAINTS = textwrap.dedent("""\
+    Constraints for this whole session, all of which will be checked at the end:
+    - Do not modify anything under tests/.
+    - Do not change any function signature or rename anything.
+    - Keep the code compatible with Python 3.8: no match statements and no `X | Y` type unions.
+    - Do not add third-party dependencies or new imports.
+""")
+HINT = ("The failing tests point at functions in app/; the bugs are in the business rules under "
+        "app/rules/, usually for a different module than the one the test names.")
+CHANGES = ("write CHANGES.md at the repository root with one line per bug you fixed in this "
+           "whole session, in the form `path/to/module.py: function_name`.")
+
+
+def phase_prompts(groups: List[List[str]]) -> List[str]:
+    """One prompt per phase. Constraints appear only in the first; CHANGES.md only in the last."""
+    out = []
+    n = len(groups)
+    for k, files in enumerate(groups, start=1):
+        listing = "\n".join(f"- {f}" for f in files)
+        if k == 1:
+            text = (f"This repository has failing tests. We will fix them in {n} phases in this "
+                    f"session.\n\n{CONSTRAINTS}\n{HINT}\n\nPhase 1 of {n}: make these test "
+                    f"files pass, and work only on these for now:\n{listing}\n")
+        else:
+            text = (f"Phase {k} of {n}: make these test files pass, and work only on these for "
+                    f"now:\n{listing}\n")
+        if k == n:
+            text += f"\nThen run the full test suite, and finally {CHANGES}\n"
+        out.append(text)
+    return out
+
+
 def _func(name: str, body: str, doc: str) -> str:
     return f"def {name}(x: int, y: int) -> int:\n    \"\"\"{doc}\"\"\"\n    {body}\n"
 
 
-def build(root: Path, seed: int, n_modules: int, n_bugs: int, filler: int) -> Dict:
+def build(root: Path, seed: int, n_modules: int, n_bugs: int, filler: int,
+          phases: int = 1) -> Dict:
     rng = random.Random(seed)
     pkg = root / "app"
     (pkg / "rules").mkdir(parents=True)
@@ -145,13 +178,26 @@ def build(root: Path, seed: int, n_modules: int, n_bugs: int, filler: int) -> Di
     key = root.parent / f"{root.name}.bugs.json"  # answer key, kept outside the repo
     key.write_text(json.dumps(bugs))
     (root / "check.py").write_text(CHECK)
-    (root / "PROMPT.md").write_text(PROMPT)
+    failing = sorted({f"tests/test_{c['module']}.py" for c in callers if c["helper"]["buggy"]})
+    rng.shuffle(failing)
+    phases = max(1, min(phases, len(failing)))
+    groups = [failing[k::phases] for k in range(phases)]
+    prompt_files = []
+    if phases == 1:
+        (root / "PROMPT.md").write_text(PROMPT)
+        prompt_files = ["PROMPT.md"]
+    else:
+        for k, text in enumerate(phase_prompts(groups), start=1):
+            name = "PROMPT.md" if k == 1 else f"PHASE{k}.md"
+            (root / name).write_text(text)
+            prompt_files.append(name)
     (root / ".gitignore").write_text(".keeplist/\n__pycache__/\n.claude/\n")
     subprocess.run(["git", "init", "-q"], cwd=root, check=True)
     subprocess.run(["git", "add", "-A"], cwd=root, check=True)
     subprocess.run(["git", "-c", "user.name=task", "-c", "user.email=task@example.invalid",
                     "commit", "-qm", "task"], cwd=root, check=True)
-    return {"repo": str(root), "answer_key": str(key), "bugs": len(bugs), "modules": n_modules}
+    return {"repo": str(root), "answer_key": str(key), "bugs": len(bugs), "modules": n_modules,
+            "prompt_files": prompt_files}
 
 
 CHECK = '''"""Score the task. Prints one JSON line; exits 0 only if everything passes."""
@@ -212,10 +258,12 @@ def main() -> None:
     ap.add_argument("--modules", type=int, default=40)
     ap.add_argument("--bugs", type=int, default=24)
     ap.add_argument("--filler", type=int, default=60, help="padding functions per module")
+    ap.add_argument("--phases", type=int, default=4,
+                    help="split the work into this many prompts in one session")
     args = ap.parse_args()
     if args.dest.exists() and any(args.dest.iterdir()):
         raise SystemExit(f"{args.dest} exists and is not empty")
-    info = build(args.dest, args.seed, args.modules, args.bugs, args.filler)
+    info = build(args.dest, args.seed, args.modules, args.bugs, args.filler, args.phases)
     print(json.dumps(info))
 
 
