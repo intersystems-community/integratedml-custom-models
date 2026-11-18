@@ -76,6 +76,9 @@ class Request:
     version: str = ""  # Claude Code version
     effort: str = ""
     speed: str = ""  # fast mode shows up here
+    geo: str = ""  # where the request was served
+    tier: str = ""  # service tier
+    errors: int = 0  # API errors or retries logged since the last request
     images: int = 0  # images or documents sent since the last request
     events: Set[str] = field(default_factory=set)  # attachment types since last request
     # new tokens since the previous request, by where they came from
@@ -183,7 +186,9 @@ def load_session(path: Path) -> Session:
                 continue
             if row.get("isSidechain"):
                 continue
-            if row.get("type") in ("user", "assistant", "attachment"):
+            if row.get("type") == "system" and "error" in str(row.get("subtype", "")):
+                rows.append(row)
+            elif row.get("type") in ("user", "assistant", "attachment"):
                 rows.append(row)
 
     requests: List[Request] = []
@@ -195,6 +200,7 @@ def load_session(path: Path) -> Session:
     latest_read: Dict[str, Item] = {}
     chars: Dict[str, int] = {}  # other new content waiting for the next request
     events: Set[str] = set()  # attachment types waiting for the next request
+    errors = 0
 
     def add(source: str, texts) -> None:
         chars[source] = chars.get(source, 0) + sum(len(t) for t in texts)
@@ -203,6 +209,10 @@ def load_session(path: Path) -> Session:
         msg = row.get("message") or {}
         content = msg.get("content")
         blocks = content if isinstance(content, list) else []
+
+        if row["type"] == "system":
+            errors += 1
+            continue
 
         if row["type"] == "attachment":
             kind = (row.get("attachment") or {}).get("type")
@@ -277,6 +287,9 @@ def load_session(path: Path) -> Session:
             r.version = str(row.get("version") or "")
             r.effort = str(row.get("effort") or "")
             r.speed = str(usage.get("speed") or "")
+            r.geo = str(usage.get("inference_geo") or "")
+            r.tier = str(usage.get("service_tier") or "")
+            r.errors, errors = errors, 0
             r.events, events = events, set()
             if r.reset:
                 pending = []  # whatever was pending is inside the summary now
@@ -639,6 +652,10 @@ def miss_cause(prev: Request, r: Request) -> str:
         return "Claude Code upgraded"
     if changed("effort") or changed("speed"):
         return "effort or fast mode changed"
+    if changed("geo") or changed("tier"):
+        return "served from another region or tier"
+    if r.errors:
+        return "after an API error or retry"
     if r.events & PROMPT_CHANGES:
         return "tools, instructions or date changed"
     if r.time is None or prev.time is None:
@@ -655,11 +672,16 @@ def cache_breakdown(sessions: Sequence[Session], actual: float) -> dict:
         "model switched",
         "Claude Code upgraded",
         "effort or fast mode changed",
+        "served from another region or tier",
+        "after an API error or retry",
         "tools, instructions or date changed",
     ]
     causes += ["none of these, pause " + lab for _, lab in GAPS] + ["no timestamp"]
     buckets = {c: {"requests": 0, "extra_cost": 0.0} for c in causes}
     depth = {"most of the prompt": 0, "about half": 0, "a smaller tail": 0}
+    SIZES = ((200_000, "under 200k"), (500_000, "200k to 500k"), (float("inf"), "over 500k"))
+    size_n = {lab: 0 for _, lab in SIZES}
+    size_all = {lab: 0 for _, lab in SIZES}
     depth_cost = {k: 0.0 for k in depth}
     reset_cost = 0.0
     upgrade = 0.0  # extra paid if every 5-minute write were a 1-hour write
@@ -672,6 +694,8 @@ def cache_breakdown(sessions: Sequence[Session], actual: float) -> dict:
             if r.reset:
                 reset_cost += r.actual_cost
                 continue
+            size = next(lab for limit, lab in SIZES if prev.context < limit)
+            size_all[size] += 1
             missed = max(0, prev.context - r.cache_read)
             if missed < 0.1 * prev.context:
                 continue
@@ -686,6 +710,7 @@ def cache_breakdown(sessions: Sequence[Session], actual: float) -> dict:
                     else "about half" if frac >= 0.4 else "a smaller tail"
                 )
                 depth[k] += 1
+                size_n[size] += 1
                 depth_cost[k] += missed * (r.write_price - READ) / max(1e-9, actual)
             if cause == "none of these, pause 5 to 60 min":
                 recovered += missed * (WRITE_1H - READ)
@@ -694,6 +719,9 @@ def cache_breakdown(sessions: Sequence[Session], actual: float) -> dict:
     return {
         "misses_by_cause": buckets,
         "reset_requests_share_of_input_cost": reset_cost / max(1e-9, actual),
+        "short_unexplained_rate_by_prompt_size": {
+            k: size_n[k] / max(1, size_all[k]) for k in size_all
+        },
         "short_unexplained_by_depth": {
             k: {"requests": depth[k], "share_of_input_cost": depth_cost[k]}
             for k in depth
@@ -774,6 +802,11 @@ def main(argv: Optional[List[str]] = None) -> dict:
         print("|---|---|---|")
         for k, v in c["short_unexplained_by_depth"].items():
             print(f"| {k} | {v['requests']} | {v['share_of_input_cost']:.1%} |")
+        rates = c["short_unexplained_rate_by_prompt_size"]
+        print(
+            "\nUnexplained misses under 5 min per request, by prompt size: "
+            + ", ".join(f"{k} {v:.1%}" for k, v in rates.items())
+        )
         print(
             f"\nRequests right after a reset: "
             f"{c['reset_requests_share_of_input_cost']:.1%} of input cost."
