@@ -71,13 +71,19 @@ def compacted(session: Session, threshold: float) -> Dict[str, float]:
 def what_if(sessions: Sequence[Session], thresholds=THRESHOLDS) -> List[dict]:
     keep = sum(compacted(s, float("inf"))["cost"] for s in sessions)
     actual = sum(r.actual_cost for s in sessions for r in s.requests)
-    rows = [{"threshold": None, "vs_recorded": keep / actual - 1, "compactions": 0}]
+    output = OUTPUT_PRICE * sum(r.output for s in sessions for r in s.requests)
+    rows = [{"threshold": None, "vs_recorded": keep / actual - 1, "vs_replay": 0.0,
+             "vs_total": 0.0, "compactions": 0, "input_share": actual / (actual + output)}]
     for t in thresholds:
         runs = [compacted(s, t) for s in sessions]
+        cost = sum(r["cost"] for r in runs)
         rows.append(
             {
                 "threshold": t,
-                "vs_recorded": sum(r["cost"] for r in runs) / actual - 1,
+                "vs_recorded": cost / actual - 1,
+                "vs_replay": cost / keep - 1,
+                # total token cost = input + output; output is assumed unchanged
+                "vs_total": (cost - keep) / (keep + output),
                 "compactions": sum(r["compactions"] for r in runs),
             }
         )
@@ -205,11 +211,14 @@ def main(argv: Optional[List[str]] = None) -> dict:
     rows = what_if(sessions)
     print(f"{len(sessions)} session(s). Compaction what-if (input cost only; "
           f"summary {SUMMARY // 1000}k, {KEEP // 1000}k recent tokens kept):\n")
-    print("| compact when the prompt passes | input cost vs recorded | compactions |")
-    print("|---|---|---|")
-    for row in rows:
-        label = "never (replay check)" if row["threshold"] is None else f"{row['threshold'] // 1000}k"
-        print(f"| {label} | {row['vs_recorded']:+.1%} | {row['compactions']:,} |")
+    print(f"Input is {rows[0]['input_share']:.0%} of total token cost here "
+          f"(output priced at {OUTPUT_PRICE:g}x input); replay check: unchanged replay is "
+          f"{rows[0]['vs_recorded']:+.1%} vs recorded input cost.\n")
+    print("| compact when the prompt passes | input cost | total token cost (input + output) | compactions |")
+    print("|---|---|---|---|")
+    for row in rows[1:]:
+        print(f"| {row['threshold'] // 1000}k | {row['vs_replay']:+.1%} | {row['vs_total']:+.1%} "
+              f"| {row['compactions']:,} |")
 
     target = load_session(args.plot_session) if args.plot_session else typical(sessions)
     args.plot.write_text(svg_plot(target, args.plot_threshold or None))

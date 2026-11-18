@@ -67,6 +67,7 @@ class Request:
     plain: int = 0  # uncached, unwritten input tokens
     write_price: float = WRITE
     iterations: int = 1  # server-side iterations summed into one record
+    output: int = 0  # output tokens generated
     fixed: int = 0  # new non-evictable tokens since the previous request
     items: List[Item] = field(default_factory=list)  # new tool results
     reset: bool = False  # context shrank: compaction, context editing or a restart
@@ -275,6 +276,7 @@ def load_session(path: Path) -> Session:
                 plain=plain,
                 write_price=wprice,
                 iterations=len(iters),
+                output=sum(int(it.get("output_tokens", 0) or 0) for it in iters),
             )
             prev = requests[-1].context if requests else 0
             # Any shrink means the client removed content (compaction, context
